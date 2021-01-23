@@ -1,1 +1,0 @@
-mongodb://dbDev:mrDevSir@testcluster-shard-00-00.lcdjb.mongodb.net:27017,testcluster-shard-00-01.lcdjb.mongodb.net:27017,testcluster-shard-00-02.lcdjb.mongodb.net:27017/superdb?ssl=true&replicaSet=atlas-hk0vja-shard-0&authSource=admin&retryWrites=true&w=majority
