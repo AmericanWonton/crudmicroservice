@@ -23,7 +23,7 @@ func logWriter(logMessage string) {
 	//Logging info
 
 	wd, _ := os.Getwd()
-	logDir := filepath.Join(wd, "logging", "superDBAppLog.txt")
+	logDir := filepath.Join(wd, "logging", "logging.txt")
 	logFile, err := os.OpenFile(logDir, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0777)
 
 	defer logFile.Close()

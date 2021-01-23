@@ -5,25 +5,25 @@ gomod-exp:
 gobuild:
 	GOOS=linux GOARCH=amd64 go build -o crudoperations
 dockerbuild:
-	docker build -t suberdb .
+	docker build -t crudoperations .
 dockerbuildandpush:
-	docker build -t suberdb .
-	docker tag suberdb americanwonton/suberdb
-	docker push americanwonton/suberdb
+	docker build -t crudoperations .
+	docker tag crudoperations americanwonton/crudoperations
+	docker push americanwonton/crudoperations
 dockerrun:
-	docker run -it -p 80:80 suberdb
+	docker run -it -p 80:80 crudoperations
 dockerrundetached:
-	docker run -d -p 80:80 suberdb
+	docker run -d -p 80:80 crudoperations
 dockerrunitvolume:
-	docker run -it -p 80:80 -v photo-images:/static/images suberdb
+	docker run -it -p 80:80 -v photo-images:/static/images crudoperations
 dockerrundetvolume:
-	docker run -d -p 80:80 -v photo-images:/static/images suberdb
+	docker run -d -p 80:80 -v photo-images:/static/images crudoperations
 dockertagimage:
-	docker tag suberdb americanwonton/suberdb
+	docker tag crudoperations americanwonton/crudoperations
 dockerimagepush:
-	docker push americanwonton/suberdb
+	docker push americanwonton/crudoperations
 dockerallpush:
-	docker tag suberdb americanwonton/suberdb
-	docker push americanwonton/suberdb
+	docker tag crudoperations americanwonton/crudoperations
+	docker push americanwonton/crudoperations
 dockerseeshell:
-	docker run -it suberdb sh
+	docker run -it crudoperations sh
