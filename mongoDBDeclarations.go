@@ -3,8 +3,11 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -19,6 +22,7 @@ var mongoClient *mongo.Client
 var theContext context.Context
 var mongoURI string //Connection string loaded
 
+//This gets the client to connect to our DB
 func connectDB() *mongo.Client {
 	//Setup Mongo connection to Atlas Cluster
 	theClient, err := mongo.NewClient(options.Client().ApplyURI(mongoURI))
@@ -50,6 +54,7 @@ func connectDB() *mongo.Client {
 	return theClient
 }
 
+//This gets the crednetials to launch our program
 func getCreds() {
 	file, err := os.Open("security/mongocreds.txt")
 
@@ -69,4 +74,26 @@ func getCreds() {
 	file.Close()
 
 	mongoURI = text[0]
+}
+
+//This is a test API we can ping on our Amazon server
+func testPing(w http.ResponseWriter, r *http.Request) {
+	//Initialize struct for taking messages
+	type TestCrudPing struct {
+		TheCrudPing string `json:"TheCrudPing"`
+	}
+	//Collect JSON from Postman or wherever
+	//Get the byte slice from the request body ajax
+	bs, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		fmt.Println(err)
+		logWriter(err.Error())
+	}
+	//Marshal it into our type
+	var postedMessage TestCrudPing
+	json.Unmarshal(bs, &postedMessage)
+
+	messageLog := "We've had a ping come in from somewhere: " + postedMessage.TheCrudPing
+	logWriter(messageLog)
+	fmt.Printf("%v\n", messageLog)
 }

@@ -1,11 +1,9 @@
 run:
 	go run *.go
-
 gomod-exp:
 	export GO111MODULE=on
-
 gobuild:
-	GOOS=linux GOARCH=amd64 go build -o superdbbinary
+	GOOS=linux GOARCH=amd64 go build -o crudoperations
 dockerbuild:
 	docker build -t suberdb .
 dockerbuildandpush:

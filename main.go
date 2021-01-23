@@ -41,6 +41,9 @@ func logWriter(logMessage string) {
 func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 
+	debugMessage := "\n\nWe are now handling requests"
+	fmt.Println(debugMessage)
+	logWriter(debugMessage)
 	//Mongo No-SQL Stuff
 	//Serve our static files
 	log.Fatal(http.ListenAndServe(":80", myRouter))
