@@ -45,6 +45,8 @@ func handleRequests() {
 	fmt.Println(debugMessage)
 	logWriter(debugMessage)
 	//Mongo No-SQL Stuff
+	myRouter.HandleFunc("/testPing", testPing).Methods("POST") //Test a post to this server
+	myRouter.HandleFunc("/addUser", addUser).Methods("POST")   //Test a post to this server
 	//Serve our static files
 	log.Fatal(http.ListenAndServe(":80", myRouter))
 }
