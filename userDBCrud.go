@@ -200,7 +200,7 @@ func deleteUser(w http.ResponseWriter, req *http.Request) {
 		}
 		fmt.Fprint(w, string(theJSONMessage))
 	} else {
-		theErr := "User successfully deleted in addUser in crudoperations: " + string(bs)
+		theErr := "User successfully deleted in deleteUser in crudoperations: " + string(bs)
 		logWriter(theErr)
 		theReturnMessage.TheErr = ""
 		theReturnMessage.ResultMsg = theErr

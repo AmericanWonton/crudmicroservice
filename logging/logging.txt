@@ -9,3 +9,21 @@ We are now handling requests
 2021/01/25 20:28:37 
 
 We are now handling requests
+2021/01/26 14:30:53 
+
+We are now handling requests
+2021/01/26 14:36:26 
+
+We are now handling requests
+2021/01/26 14:38:09 User successfully added in addUser in crudoperations: {"UserName":"forreal","Password":"thePass","UserID":456782,"DateCreated":"fadfd","DateUpdated":"adfds;j3","PostsMade":1,"RepliesMade":22}
+2021/01/26 14:53:28 
+
+We are now handling requests
+2021/01/26 14:53:31 User successfully added in addUser in crudoperations: {"UserID": 456782}
+2021/01/26 14:54:57 User successfully deleted in addUser in crudoperations: {"UserID": 456782}
+2021/01/26 15:02:45 User successfully added in addUser in crudoperations: {"UserName":"forreal","Password":"thePass","UserID":456782,"DateCreated":"fadfd","DateUpdated":"adfds;j3","PostsMade":1,"RepliesMade":22}
+2021/01/26 15:05:19 
+
+We are now handling requests
+2021/01/26 15:05:25 User successfully added in addUser in crudoperations: {"UserName":"forreal","Password":"thePass","UserID":456782,"DateCreated":"fadfd","DateUpdated":"adfds;j3","PostsMade":1,"RepliesMade":22}
+2021/01/26 15:05:54 User successfully deleted in deleteUser in crudoperations: {"UserID": 456782}

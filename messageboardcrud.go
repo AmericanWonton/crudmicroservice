@@ -29,7 +29,7 @@ type Message struct {
 	HasChildren     bool      `json:"HasChildren"`     //Whether this message has children to list
 	ParentMessageID int       `json:"ParentMessageID"` //The ID of this parent
 	UberParentID    int       `json:"UberParentID"`    //The final parent of this parent, IF EQUAL PARENT
-	Order           int       `json:"Order"`           //Order the commnet is in with it's reply tree
+	Order           int       `json:"Order"`           //Order the comment is in with it's reply tree
 	RepliesAmount   int       `json:"RepliesAmount"`   //Amount of replies this message has
 	TheMessage      string    `json:"TheMessage"`      //The MEssage in the post
 	DateCreated     string    `json:"DateCreated"`     //When the message was created
