@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
@@ -292,6 +293,78 @@ func updateUser(w http.ResponseWriter, req *http.Request) {
 		}
 		fmt.Fprint(w, string(theJSONMessage))
 	}
+}
+
+/* This function returns a map of ALL Usernames entered in our database
+when called */
+func giveAllUsernames(w http.ResponseWriter, req *http.Request) {
+	//Declare empty map to fill and return
+	usernameMap := make(map[string]bool) //Clear Map for future use on page load
+	//Declare data to return
+	type ReturnMessage struct {
+		TheErr          []string        `json:"TheErr"`
+		ResultMsg       []string        `json:"ResultMsg"`
+		SuccOrFail      int             `json:"SuccOrFail"`
+		ReturnedUserMap map[string]bool `json:"ReturnedUserMap"`
+	}
+	theReturnMessage := ReturnMessage{}
+
+	userCollection := mongoClient.Database("microservice").Collection("users") //Here's our collection
+
+	//Query Mongo for all Users
+	theFilter := bson.M{}
+	findOptions := options.Find()
+	currUser, err := userCollection.Find(theContext, theFilter, findOptions)
+	if err != nil {
+		if strings.Contains(err.Error(), "no documents in result") {
+			theErr := "No documents were returned for hotdogs in MongoDB: " + err.Error()
+			fmt.Printf("DEBUG: %v\n", theErr)
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, theErr)
+			theReturnMessage.TheErr = append(theReturnMessage.TheErr, theErr)
+			theReturnMessage.SuccOrFail = 1
+			logWriter(theErr)
+		} else {
+			theErr := "There was an error returning results for this Users, :" + err.Error()
+			fmt.Printf("DEBUG: %v\n", theErr)
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, theErr)
+			theReturnMessage.TheErr = append(theReturnMessage.TheErr, theErr)
+			theReturnMessage.SuccOrFail = 1
+			logWriter(theErr)
+		}
+	}
+	//Loop over query results and fill hotdogs array
+	for currUser.Next(theContext) {
+		// create a value into which the single document can be decoded
+		var aUser AUser
+		err := currUser.Decode(&aUser)
+		if err != nil {
+			theErr := "Error decoding Users in MongoDB in giveAllUsernames: " + err.Error()
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, theErr)
+			theReturnMessage.TheErr = append(theReturnMessage.TheErr, theErr)
+			theReturnMessage.SuccOrFail = 0
+			logWriter(theErr)
+		}
+		//Fill Username map with the found Username
+		usernameMap[aUser.UserName] = true
+	}
+	// Close the cursor once finished
+	currUser.Close(theContext)
+
+	//Check to see if anyusernames were returned
+	if len(usernameMap) <= 0 {
+		theErr := "No usernames returned...this could be the site's first deployment with no users!"
+		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, theErr)
+		theReturnMessage.TheErr = append(theReturnMessage.TheErr, theErr)
+		theReturnMessage.SuccOrFail = 2
+	}
+	//Format the JSON map for returning our results
+	theJSONMessage, err := json.Marshal(theReturnMessage)
+	//Send the response back
+	if err != nil {
+		errIs := "Error formatting JSON for return in giveAllUsernames: " + err.Error()
+		logWriter(errIs)
+	}
+	fmt.Fprint(w, string(theJSONMessage))
 }
 
 //This is a test API we can ping on our Amazon server

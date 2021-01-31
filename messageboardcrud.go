@@ -71,14 +71,13 @@ func insertOneNewMessage(w http.ResponseWriter, r *http.Request) {
 	messageCollection := mongoClient.Database("microservice").Collection("messages") //Here's our collection
 	collectedStuff := []interface{}{messageIn}
 	//Insert Our Data
-	insertManyResult, err := messageCollection.InsertMany(context.TODO(), collectedStuff)
+	_, err = messageCollection.InsertMany(context.TODO(), collectedStuff)
 	//Declare data to return
 	type ReturnMessage struct {
 		TheErr     string `json:"TheErr"`
 		ResultMsg  string `json:"ResultMsg"`
 		SuccOrFail int    `json:"SuccOrFail"`
 	}
-	fmt.Printf("DEBUG: Need to print this, IDE won't shut up: %v\n", insertManyResult)
 	theReturnMessage := ReturnMessage{}
 	if err != nil {
 		theErr := "Error writing insert message in insertOneNewMessage in crudoperations: " + err.Error()
