@@ -55,3 +55,16 @@ We are now handling requests
 We are now handling requests
 2021/01/31 14:13:30 User successfully added in addUser in crudoperations: {"UserName":"forreal","Password":"thePass","UserID":456782,"DateCreated":"fadfd","DateUpdated":"adfds;j3","PostsMade":1,"RepliesMade":22}
 2021/01/31 14:13:54 User successfully updated in updateUser in crudoperations: {"UserName":"fakeboy420","Password":"bashoogala","UserID":456782,"DateCreated":"nineteenhitler","DateUpdated":"eeeeee","PostsMade":99,"RepliesMade":5}
+2021/01/31 14:25:47 
+
+We are now handling requests
+2021/01/31 14:26:05 
+
+We are now handling requests
+2021/01/31 14:30:31 
+
+We are now handling requests
+2021/01/31 14:30:38 User successfully inserted message in insertOneNewMessage in crudoperations: {"MessageID":334545,"UserID":445653,"PosterName":"JimUsername","Messages":[],"IsChild":false,"HasChildren":false,"ParentMessageID":0,"UberParentID":0,"Order":0,"RepliesAmount":0,"TheMessage":"Test message one","DateCreated":"Uhhh","LastUpdated":"eaadf"}
+2021/01/31 14:31:31 Message successfully deleted in deleteOneMessage in crudoperations: {"MessageID": 334545}
+2021/01/31 14:31:50 User successfully inserted message in insertOneNewMessage in crudoperations: {"MessageID":334545,"UserID":445653,"PosterName":"JimUsername","Messages":[],"IsChild":false,"HasChildren":false,"ParentMessageID":0,"UberParentID":0,"Order":0,"RepliesAmount":0,"TheMessage":"Test message one","DateCreated":"Uhhh","LastUpdated":"eaadf"}
+2021/01/31 14:31:56 Message successfully updated in updateOneMessage in crudoperations: {"MessageID":334545,"UserID":445653,"PosterName":"Allah_on_high","Messages":[],"IsChild":true,"HasChildren":false,"ParentMessageID":33334,"UberParentID":77778,"Order":0,"RepliesAmount":0,"TheMessage":"The changing tides, son","DateCreated":"Uhhh","LastUpdated":"eaadf"}

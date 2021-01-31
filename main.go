@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -45,10 +46,13 @@ func handleRequests() {
 	fmt.Println(debugMessage)
 	logWriter(debugMessage)
 	//Mongo No-SQL Stuff
-	myRouter.HandleFunc("/testPing", testPing).Methods("POST")     //Test a post to this server
-	myRouter.HandleFunc("/addUser", addUser).Methods("POST")       //add a User
-	myRouter.HandleFunc("/deleteUser", deleteUser).Methods("POST") //Delete a User
-	myRouter.HandleFunc("/updateUser", updateUser).Methods("POST") //update a User
+	myRouter.HandleFunc("/testPing", testPing).Methods("POST")                       //Test a post to this server
+	myRouter.HandleFunc("/addUser", addUser).Methods("POST")                         //add a User
+	myRouter.HandleFunc("/deleteUser", deleteUser).Methods("POST")                   //Delete a User
+	myRouter.HandleFunc("/updateUser", updateUser).Methods("POST")                   //update a User
+	myRouter.HandleFunc("/insertOneNewMessage", insertOneNewMessage).Methods("POST") //insert a Message
+	myRouter.HandleFunc("/deleteOneMessage", deleteOneMessage).Methods("POST")       //Delete a Message
+	myRouter.HandleFunc("/updateOneMessage", updateOneMessage).Methods("POST")       //update a Message
 	//Serve our static files
 	log.Fatal(http.ListenAndServe(":8080", myRouter))
 }
@@ -58,6 +62,27 @@ func main() {
 
 	//Mongo Connect
 	mongoClient = connectDB()
+
+	/* Test JSON Creation */
+	theMessageTest := Message{
+		MessageID:       334545,
+		UserID:          445653,
+		PosterName:      "JimUsername",
+		Messages:        []Message{},
+		IsChild:         false,
+		HasChildren:     false,
+		ParentMessageID: 0,
+		UberParentID:    0,
+		Order:           0,
+		RepliesAmount:   0,
+		TheMessage:      "Test message one",
+		DateCreated:     "Uhhh",
+		LastUpdated:     "eaadf",
+	}
+
+	yee, _ := json.Marshal(theMessageTest)
+
+	fmt.Printf("DEBUG: \n\n Here is yee: %v\n\n", string(yee))
 
 	//Handle Requests
 	handleRequests()

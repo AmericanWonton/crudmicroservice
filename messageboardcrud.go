@@ -55,10 +55,6 @@ var currentPageNumber int = 1
 
 //Inserts one message into our 'messages' collection
 func insertOneNewMessage(w http.ResponseWriter, r *http.Request) {
-
-	type MessageInsert struct {
-		MessageInserted Message `json:"MessageInserted"`
-	}
 	//Unwrap from JSON
 	bs, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -68,7 +64,7 @@ func insertOneNewMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Marshal it into our type
-	var messageIn MessageInsert
+	var messageIn Message
 	json.Unmarshal(bs, &messageIn)
 
 	//Send this to the 'message' collection for safekeeping
@@ -133,9 +129,9 @@ func deleteOneMessage(w http.ResponseWriter, r *http.Request) {
 	//Search for Message and delete
 	messageCollection := mongoClient.Database("microservice").Collection("messages") //Here's our collection
 	deletes := []bson.M{
-		{"MessageID": postedMessageID.MessageID},
+		{"messageid": postedMessageID.MessageID},
 	} //Here's our filter to look for
-	deletes = append(deletes, bson.M{"MessageID": bson.M{
+	deletes = append(deletes, bson.M{"messageid": bson.M{
 		"$eq": postedMessageID.MessageID,
 	}},
 	)
@@ -189,9 +185,6 @@ func deleteOneMessage(w http.ResponseWriter, r *http.Request) {
 
 //Update one message in our 'messages' collection
 func updateOneMessage(w http.ResponseWriter, r *http.Request) {
-	type MessageUpdate struct {
-		UpdatedMessage Message `json:"UpdatedMessage"`
-	}
 	//Unwrap from JSON
 	bs, err := ioutil.ReadAll(r.Body)
 	if err != nil {
@@ -201,7 +194,7 @@ func updateOneMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//Marshal it into our type
-	var theMessageUpdate MessageUpdate
+	var theMessageUpdate Message
 	json.Unmarshal(bs, &theMessageUpdate)
 
 	//Update User
@@ -209,23 +202,23 @@ func updateOneMessage(w http.ResponseWriter, r *http.Request) {
 	messageCollection := mongoClient.Database("microservice").Collection("messages") //Here's our collection
 	theFilter := bson.M{
 		"messageid": bson.M{
-			"$eq": theMessageUpdate.UpdatedMessage.MessageID,
+			"$eq": theMessageUpdate.MessageID,
 		},
 	}
 	updatedDocument := bson.M{
 		"$set": bson.M{
-			"messageid":       theMessageUpdate.UpdatedMessage.MessageID,
-			"userid":          theMessageUpdate.UpdatedMessage.UserID,
-			"postername":      theMessageUpdate.UpdatedMessage.PosterName,
-			"messages":        theMessageUpdate.UpdatedMessage.Messages,
-			"ischild":         theMessageUpdate.UpdatedMessage.IsChild,
-			"haschildren":     theMessageUpdate.UpdatedMessage.HasChildren,
-			"parentmessageid": theMessageUpdate.UpdatedMessage.ParentMessageID,
-			"uberparentid":    theMessageUpdate.UpdatedMessage.UberParentID,
-			"order":           theMessageUpdate.UpdatedMessage.Order,
-			"repliesamount":   theMessageUpdate.UpdatedMessage.RepliesAmount,
-			"themessage":      theMessageUpdate.UpdatedMessage.TheMessage,
-			"datecreated":     theMessageUpdate.UpdatedMessage.DateCreated,
+			"messageid":       theMessageUpdate.MessageID,
+			"userid":          theMessageUpdate.UserID,
+			"postername":      theMessageUpdate.PosterName,
+			"messages":        theMessageUpdate.Messages,
+			"ischild":         theMessageUpdate.IsChild,
+			"haschildren":     theMessageUpdate.HasChildren,
+			"parentmessageid": theMessageUpdate.ParentMessageID,
+			"uberparentid":    theMessageUpdate.UberParentID,
+			"order":           theMessageUpdate.Order,
+			"repliesamount":   theMessageUpdate.RepliesAmount,
+			"themessage":      theMessageUpdate.TheMessage,
+			"datecreated":     theMessageUpdate.DateCreated,
 			"lastupdated":     theTimeNow.Format("2006-01-02 15:04:05"),
 		},
 	}
