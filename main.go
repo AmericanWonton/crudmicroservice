@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -59,21 +58,6 @@ func main() {
 
 	//Mongo Connect
 	mongoClient = connectDB()
-
-	/* Test Print JSON Stuff */
-	userTest := AUser{
-		UserName:    "forreal",
-		Password:    "thePass",
-		UserID:      456782,
-		DateCreated: "fadfd",
-		DateUpdated: "adfds;j3",
-		PostsMade:   1,
-		RepliesMade: 22,
-	}
-
-	jsonBoof, _ := json.Marshal(userTest)
-
-	fmt.Printf("Here is some boof: %v\n", string(jsonBoof))
 
 	//Handle Requests
 	handleRequests()

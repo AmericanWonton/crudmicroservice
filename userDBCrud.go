@@ -158,12 +158,16 @@ func deleteUser(w http.ResponseWriter, req *http.Request) {
 	var postedUserID UserDelete
 	json.Unmarshal(bs, &postedUserID)
 
+	fmt.Printf("DEBUG: Here is our UserID: %v\n", postedUserID.UserID)
+
 	//Search for User and delete
 	userCollection := mongoClient.Database("microservice").Collection("users") //Here's our collection
 	deletes := []bson.M{
-		{"UserID": postedUserID.UserID},
+		{"userid": postedUserID.UserID},
 	} //Here's our filter to look for
-	deletes = append(deletes, bson.M{"UserID": bson.M{
+	deletes = append(deletes, bson.M{"userid": bson.M{
+		"$eq": postedUserID.UserID,
+	}}, bson.M{"userid": bson.M{
 		"$eq": postedUserID.UserID,
 	}},
 	)
@@ -185,7 +189,7 @@ func deleteUser(w http.ResponseWriter, req *http.Request) {
 	theReturnMessage := ReturnMessage{}
 
 	// run bulk write
-	_, err = userCollection.BulkWrite(theContext, writes)
+	bulkWrite, err := userCollection.BulkWrite(theContext, writes)
 	if err != nil {
 		theErr := "Error writing delete User in deleteUser in crudoperations: " + err.Error()
 		logWriter(theErr)
@@ -201,6 +205,7 @@ func deleteUser(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, string(theJSONMessage))
 	} else {
 		theErr := "User successfully deleted in deleteUser in crudoperations: " + string(bs)
+		fmt.Printf("DEBUG: %v . Here is the amount deleted:%v\n", theErr, bulkWrite.DeletedCount)
 		logWriter(theErr)
 		theReturnMessage.TheErr = ""
 		theReturnMessage.ResultMsg = theErr
@@ -217,9 +222,6 @@ func deleteUser(w http.ResponseWriter, req *http.Request) {
 
 //This updates a User to our database; called from anywhere
 func updateUser(w http.ResponseWriter, req *http.Request) {
-	type UserUpdate struct {
-		UpdatedUser AUser `json:"UpdatedUser "`
-	}
 	//Unwrap from JSON
 	bs, err := ioutil.ReadAll(req.Body)
 	if err != nil {
@@ -229,29 +231,31 @@ func updateUser(w http.ResponseWriter, req *http.Request) {
 	}
 
 	//Marshal it into our type
-	var theUserUpdate UserUpdate
+	var theUserUpdate AUser
 	json.Unmarshal(bs, &theUserUpdate)
+
+	fmt.Printf("DEBUG: The UserID sent to us is: %v\n\n", theUserUpdate.UserID)
 
 	//Update User
 	theTimeNow := time.Now()
 	userCollection := mongoClient.Database("microservice").Collection("users") //Here's our collection
 	theFilter := bson.M{
 		"userid": bson.M{
-			"$eq": theUserUpdate.UpdatedUser.UserID, // check if bool field has value of 'false'
+			"$eq": theUserUpdate.UserID, // check if bool field has value of 'false'
 		},
 	}
 	updatedDocument := bson.M{
 		"$set": bson.M{
-			"username":    theUserUpdate.UpdatedUser.UserName,
-			"password":    theUserUpdate.UpdatedUser.Password,
-			"userid":      theUserUpdate.UpdatedUser.UserID,
-			"datecreated": theUserUpdate.UpdatedUser.DateCreated,
+			"username":    theUserUpdate.UserName,
+			"password":    theUserUpdate.Password,
+			"userid":      theUserUpdate.UserID,
+			"datecreated": theUserUpdate.DateCreated,
 			"dateupdated": theTimeNow.Format("2006-01-02 15:04:05"),
-			"postsmade":   theUserUpdate.UpdatedUser.PostsMade,
-			"repliesmade": theUserUpdate.UpdatedUser.RepliesMade,
+			"postsmade":   theUserUpdate.PostsMade,
+			"repliesmade": theUserUpdate.RepliesMade,
 		},
 	}
-	_, err = userCollection.UpdateOne(theContext, theFilter, updatedDocument)
+	updatedInfo, err := userCollection.UpdateOne(theContext, theFilter, updatedDocument)
 
 	//Declare data to return
 	type ReturnMessage struct {
@@ -261,7 +265,7 @@ func updateUser(w http.ResponseWriter, req *http.Request) {
 	}
 	theReturnMessage := ReturnMessage{}
 	if err != nil {
-		theErr := "Error writing update User in deleteUser in crudoperations: " + err.Error()
+		theErr := "Error writing update User in updateUser in crudoperations: " + err.Error()
 		logWriter(theErr)
 		theReturnMessage.TheErr = theErr
 		theReturnMessage.ResultMsg = theErr
@@ -275,6 +279,7 @@ func updateUser(w http.ResponseWriter, req *http.Request) {
 		fmt.Fprint(w, string(theJSONMessage))
 	} else {
 		theErr := "User successfully updated in updateUser in crudoperations: " + string(bs)
+		fmt.Printf("DEBUG: %v. Here is the update results: %v\n", theErr, updatedInfo.ModifiedCount)
 		logWriter(theErr)
 		theReturnMessage.TheErr = ""
 		theReturnMessage.ResultMsg = theErr

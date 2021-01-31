@@ -27,3 +27,31 @@ We are now handling requests
 We are now handling requests
 2021/01/26 15:05:25 User successfully added in addUser in crudoperations: {"UserName":"forreal","Password":"thePass","UserID":456782,"DateCreated":"fadfd","DateUpdated":"adfds;j3","PostsMade":1,"RepliesMade":22}
 2021/01/26 15:05:54 User successfully deleted in deleteUser in crudoperations: {"UserID": 456782}
+2021/01/31 12:03:47 
+
+We are now handling requests
+2021/01/31 12:04:23 User successfully added in addUser in crudoperations: {"UserName":"forreal","Password":"thePass","UserID":456782,"DateCreated":"fadfd","DateUpdated":"adfds;j3","PostsMade":1,"RepliesMade":22}
+2021/01/31 12:05:22 User successfully deleted in deleteUser in crudoperations: {"UserID": 456782}
+2021/01/31 12:10:25 
+
+We are now handling requests
+2021/01/31 12:10:31 User successfully deleted in deleteUser in crudoperations: {"UserID": 456782}
+2021/01/31 12:15:24 
+
+We are now handling requests
+2021/01/31 12:15:37 User successfully added in addUser in crudoperations: {"UserName":"forreal","Password":"thePass","UserID":456782,"DateCreated":"fadfd","DateUpdated":"adfds;j3","PostsMade":1,"RepliesMade":22}
+2021/01/31 12:17:17 User successfully updated in updateUser in crudoperations: {"UserName":"fakeboy420","Password":"bashoogala","UserID":456782,"DateCreated":"nineteenhitler","DateUpdated":"eeeeee","PostsMade":99,"RepliesMade":5}
+2021/01/31 14:00:16 
+
+We are now handling requests
+2021/01/31 14:00:28 User successfully updated in updateUser in crudoperations: {"UserName":"fakeboy420","Password":"bashoogala","UserID":456782,"DateCreated":"nineteenhitler","DateUpdated":"eeeeee","PostsMade":99,"RepliesMade":5}
+2021/01/31 14:08:07 
+
+We are now handling requests
+2021/01/31 14:08:10 User successfully added in addUser in crudoperations: {"UserName":"forreal","Password":"thePass","UserID":456782,"DateCreated":"fadfd","DateUpdated":"adfds;j3","PostsMade":1,"RepliesMade":22}
+2021/01/31 14:09:24 User successfully updated in updateUser in crudoperations: {"UserName":"fakeboy420","Password":"bashoogala","UserID":456782,"DateCreated":"nineteenhitler","DateUpdated":"eeeeee","PostsMade":99,"RepliesMade":5}
+2021/01/31 14:13:26 
+
+We are now handling requests
+2021/01/31 14:13:30 User successfully added in addUser in crudoperations: {"UserName":"forreal","Password":"thePass","UserID":456782,"DateCreated":"fadfd","DateUpdated":"adfds;j3","PostsMade":1,"RepliesMade":22}
+2021/01/31 14:13:54 User successfully updated in updateUser in crudoperations: {"UserName":"fakeboy420","Password":"bashoogala","UserID":456782,"DateCreated":"nineteenhitler","DateUpdated":"eeeeee","PostsMade":99,"RepliesMade":5}
