@@ -68,3 +68,12 @@ We are now handling requests
 2021/01/31 14:31:31 Message successfully deleted in deleteOneMessage in crudoperations: {"MessageID": 334545}
 2021/01/31 14:31:50 User successfully inserted message in insertOneNewMessage in crudoperations: {"MessageID":334545,"UserID":445653,"PosterName":"JimUsername","Messages":[],"IsChild":false,"HasChildren":false,"ParentMessageID":0,"UberParentID":0,"Order":0,"RepliesAmount":0,"TheMessage":"Test message one","DateCreated":"Uhhh","LastUpdated":"eaadf"}
 2021/01/31 14:31:56 Message successfully updated in updateOneMessage in crudoperations: {"MessageID":334545,"UserID":445653,"PosterName":"Allah_on_high","Messages":[],"IsChild":true,"HasChildren":false,"ParentMessageID":33334,"UberParentID":77778,"Order":0,"RepliesAmount":0,"TheMessage":"The changing tides, son","DateCreated":"Uhhh","LastUpdated":"eaadf"}
+2021/01/31 15:38:55 
+
+We are now handling requests
+2021/01/31 15:48:00 
+
+We are now handling requests
+2021/02/01 15:59:59 
+
+We are now handling requests

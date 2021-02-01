@@ -308,6 +308,7 @@ func giveAllUsernames(w http.ResponseWriter, req *http.Request) {
 		ReturnedUserMap map[string]bool `json:"ReturnedUserMap"`
 	}
 	theReturnMessage := ReturnMessage{}
+	theReturnMessage.SuccOrFail = 0 //Initially set to success
 
 	userCollection := mongoClient.Database("microservice").Collection("users") //Here's our collection
 
@@ -350,13 +351,23 @@ func giveAllUsernames(w http.ResponseWriter, req *http.Request) {
 	// Close the cursor once finished
 	currUser.Close(theContext)
 
-	//Check to see if anyusernames were returned
-	if len(usernameMap) <= 0 {
+	//Check to see if anyusernames were returned or we have errors
+	if theReturnMessage.SuccOrFail >= 1 {
+		theErr := "There are a number of errors for returning these Usernames..."
+		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, theErr)
+		theReturnMessage.TheErr = append(theReturnMessage.TheErr, theErr)
+	} else if len(usernameMap) <= 0 {
 		theErr := "No usernames returned...this could be the site's first deployment with no users!"
 		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, theErr)
 		theReturnMessage.TheErr = append(theReturnMessage.TheErr, theErr)
 		theReturnMessage.SuccOrFail = 2
+	} else {
+		theErr := "No issues returning Usernames"
+		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, theErr)
+		theReturnMessage.TheErr = append(theReturnMessage.TheErr, theErr)
+		theReturnMessage.SuccOrFail = 0
 	}
+	theReturnMessage.ReturnedUserMap = usernameMap
 	//Format the JSON map for returning our results
 	theJSONMessage, err := json.Marshal(theReturnMessage)
 	//Send the response back

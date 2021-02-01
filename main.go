@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -53,6 +52,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/insertOneNewMessage", insertOneNewMessage).Methods("POST") //insert a Message
 	myRouter.HandleFunc("/deleteOneMessage", deleteOneMessage).Methods("POST")       //Delete a Message
 	myRouter.HandleFunc("/updateOneMessage", updateOneMessage).Methods("POST")       //update a Message
+	myRouter.HandleFunc("/giveAllUsernames", giveAllUsernames).Methods("GET")        //Return allUsernames
 	//Serve our static files
 	log.Fatal(http.ListenAndServe(":8080", myRouter))
 }
@@ -64,25 +64,28 @@ func main() {
 	mongoClient = connectDB()
 
 	/* Test JSON Creation */
-	theMessageTest := Message{
-		MessageID:       334545,
-		UserID:          445653,
-		PosterName:      "JimUsername",
-		Messages:        []Message{},
-		IsChild:         false,
-		HasChildren:     false,
-		ParentMessageID: 0,
-		UberParentID:    0,
-		Order:           0,
-		RepliesAmount:   0,
-		TheMessage:      "Test message one",
-		DateCreated:     "Uhhh",
-		LastUpdated:     "eaadf",
-	}
+	/*
+		theMessageTest := Message{
+			MessageID:       334545,
+			UserID:          445653,
+			PosterName:      "JimUsername",
+			Messages:        []Message{},
+			IsChild:         false,
+			HasChildren:     false,
+			ParentMessageID: 0,
+			UberParentID:    0,
+			Order:           0,
+			RepliesAmount:   0,
+			TheMessage:      "Test message one",
+			DateCreated:     "Uhhh",
+			LastUpdated:     "eaadf",
+		}
 
-	yee, _ := json.Marshal(theMessageTest)
+		yee, _ := json.Marshal(theMessageTest)
 
-	fmt.Printf("DEBUG: \n\n Here is yee: %v\n\n", string(yee))
+		fmt.Printf("DEBUG: \n\n Here is yee: %v\n\n", string(yee))
+
+	*/
 
 	//Handle Requests
 	handleRequests()
