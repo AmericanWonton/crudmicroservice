@@ -53,6 +53,8 @@ func handleRequests() {
 	myRouter.HandleFunc("/deleteOneMessage", deleteOneMessage).Methods("POST")       //Delete a Message
 	myRouter.HandleFunc("/updateOneMessage", updateOneMessage).Methods("POST")       //update a Message
 	myRouter.HandleFunc("/giveAllUsernames", giveAllUsernames).Methods("GET")        //Return allUsernames
+	//Field Validation Stuff
+	myRouter.HandleFunc("/randomIDCreationAPI", randomIDCreationAPI).Methods("GET") //update a Message
 	//Serve our static files
 	log.Fatal(http.ListenAndServe(":8080", myRouter))
 }
