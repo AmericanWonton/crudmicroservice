@@ -30,10 +30,13 @@ type AUser struct { //Using this for Mongo
 	UserName    string `json:"UserName"`
 	Password    string `json:"Password"`
 	UserID      int    `json:"UserID"`
-	DateCreated string `json:"DateCreated"`
-	DateUpdated string `json:"DateUpdated"`
+	Email       string `json:"Email"`
+	PhoneACode  int    `json:"PhoneACode"`
+	PhoneNumber int    `json:"PhoneNumber"`
 	PostsMade   int    `json:"PostsMade"`
 	RepliesMade int    `json:"RepliesMade"`
+	DateCreated string `json:"DateCreated"`
+	DateUpdated string `json:"DateUpdated"`
 }
 
 //This gets the client to connect to our DB
@@ -252,10 +255,13 @@ func updateUser(w http.ResponseWriter, req *http.Request) {
 			"username":    theUserUpdate.UserName,
 			"password":    theUserUpdate.Password,
 			"userid":      theUserUpdate.UserID,
-			"datecreated": theUserUpdate.DateCreated,
-			"dateupdated": theTimeNow.Format("2006-01-02 15:04:05"),
+			"email":       theUserUpdate.Email,
+			"phoneacode":  theUserUpdate.PhoneACode,
+			"phonenumber": theUserUpdate.PhoneNumber,
 			"postsmade":   theUserUpdate.PostsMade,
 			"repliesmade": theUserUpdate.RepliesMade,
+			"datecreated": theUserUpdate.DateCreated,
+			"dateupdated": theTimeNow.Format("2006-01-02 15:04:05"),
 		},
 	}
 	updatedInfo, err := userCollection.UpdateOne(theContext, theFilter, updatedDocument)
