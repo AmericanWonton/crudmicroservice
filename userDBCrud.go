@@ -386,6 +386,100 @@ func giveAllUsernames(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprint(w, string(theJSONMessage))
 }
 
+/* This function searches with a Username and password to return a yes or no response
+if the User is found; is so, we return the User, with a successful response.
+If not, we return a failed response and an empty User profile */
+func userLogin(w http.ResponseWriter, req *http.Request) {
+	//Declare type to be returned later through JSON Response
+	type ReturnMessage struct {
+		TheErr     string `json:"TheErr"`
+		ResultMsg  string `json:"ResultMsg"`
+		SuccOrFail int    `json:"SuccOrFail"`
+		TheUser    AUser  `json:"TheUser"`
+	}
+	theResponseMessage := ReturnMessage{}
+	//Collect JSON from Postman or wherever
+	//Get the byte slice from the request body ajax
+	bs, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		fmt.Println(err)
+		logWriter(err.Error())
+	}
+
+	type LoginData struct {
+		Username string `json:"Username"`
+		Password string `json:"Password"`
+	}
+
+	//Marshal the user data into our type
+	var dataForLogin LoginData
+	json.Unmarshal(bs, &dataForLogin)
+
+	var theUserReturned AUser //Initialize User to be returned after Mongo query
+
+	//Query for the User, given the userID for the User
+	user_collection := mongoClient.Database("microservice").Collection("users") //Here's our collection
+	theFilter := bson.M{
+		"username": bson.M{
+			"$eq": dataForLogin.Username, // check if bool field has value of 'false'
+		},
+		"password": bson.M{
+			"$eq": dataForLogin.Password,
+		},
+	}
+	findOptions := options.FindOne()
+	findUser := user_collection.FindOne(theContext, theFilter, findOptions)
+	if findUser.Err() != nil {
+		if strings.Contains(err.Error(), "no documents in result") {
+			returnedErr := "For " + dataForLogin.Username + ", no User was returned: " + err.Error()
+			fmt.Println(returnedErr)
+			logWriter(returnedErr)
+			theResponseMessage.SuccOrFail = 1
+			theResponseMessage.ResultMsg = returnedErr
+			theResponseMessage.TheErr = returnedErr
+			theResponseMessage.TheUser = AUser{}
+		} else {
+			returnedErr := "For " + dataForLogin.Username + ", there was a Mongo Error: " + err.Error()
+			fmt.Println(returnedErr)
+			logWriter(returnedErr)
+			theResponseMessage.SuccOrFail = 1
+			theResponseMessage.ResultMsg = returnedErr
+			theResponseMessage.TheErr = returnedErr
+			theResponseMessage.TheUser = AUser{}
+		}
+	} else {
+		//Found User, decode to return
+		err := findUser.Decode(&theUserReturned)
+		if err != nil {
+			returnedErr := "For " + dataForLogin.Username +
+				", there was an error decoding document from Mongo: " + err.Error()
+			fmt.Println(returnedErr)
+			logWriter(returnedErr)
+			theResponseMessage.SuccOrFail = 2
+			theResponseMessage.ResultMsg = returnedErr
+			theResponseMessage.TheErr = returnedErr
+			theResponseMessage.TheUser = AUser{}
+		} else {
+			returnedErr := "For " + dataForLogin.Username +
+				", User should be successfully decoded."
+			fmt.Println(returnedErr)
+			logWriter(returnedErr)
+			theResponseMessage.SuccOrFail = 0
+			theResponseMessage.ResultMsg = returnedErr
+			theResponseMessage.TheErr = ""
+			theResponseMessage.TheUser = theUserReturned
+		}
+	}
+	//Errors/Success are recorded, User given, send JSON back
+	theJSONMessage, err := json.Marshal(theResponseMessage)
+	//Send the response back
+	if err != nil {
+		errIs := "Error formatting JSON for return in userLogin: " + err.Error()
+		logWriter(errIs)
+	}
+	fmt.Fprint(w, string(theJSONMessage))
+}
+
 //This should give a random id value to both food groups
 func randomIDCreationAPI(w http.ResponseWriter, req *http.Request) {
 	type ReturnMessage struct {

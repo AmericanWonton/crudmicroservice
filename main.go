@@ -55,6 +55,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/giveAllUsernames", giveAllUsernames).Methods("GET")        //Return allUsernames
 	//Field Validation Stuff
 	myRouter.HandleFunc("/randomIDCreationAPI", randomIDCreationAPI).Methods("GET") //update a Message
+	myRouter.HandleFunc("/userLogin", userLogin).Methods("POST")                    //update a Message
 	//Serve our static files
 	log.Fatal(http.ListenAndServe(":8080", myRouter))
 }
