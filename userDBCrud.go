@@ -304,7 +304,7 @@ func updateUser(w http.ResponseWriter, req *http.Request) {
 }
 
 /* This function returns a map of ALL Usernames entered in our database
-when called */
+when called, (should be on the index page ) */
 func giveAllUsernames(w http.ResponseWriter, req *http.Request) {
 	//Declare empty map to fill and return
 	usernameMap := make(map[string]bool) //Clear Map for future use on page load
