@@ -589,6 +589,98 @@ func randomIDCreationAPI(w http.ResponseWriter, req *http.Request) {
 	fmt.Fprint(w, string(theJSONMessage))
 }
 
+//This creates a random API with no writer call,(called from this Microservice)
+func randomIDCreationAPISimple() int {
+	finalID := 0        //The final, unique ID to return to the food/user
+	randInt := 0        //The random integer added onto ID
+	randIntString := "" //The integer built through a string...
+	min, max := 0, 9    //The min and Max value for our randInt
+	foundID := false
+	for foundID == false {
+		randInt = 0
+		randIntString = ""
+		//Create the random number, convert it to string
+		for i := 0; i < 12; i++ {
+			randInt = rand.Intn(max-min) + min
+			randIntString = randIntString + strconv.Itoa(randInt)
+		}
+		//Once we have a string of numbers, we can convert it back to an integer
+		theID, err := strconv.Atoi(randIntString)
+		if err != nil {
+			fmt.Printf("We got an error converting a string back to a number, %v\n", err)
+			fmt.Printf("Here is randInt: %v\n and randIntString: %v\n", randInt, randIntString)
+			fmt.Println(err)
+			log.Fatal(err)
+		}
+		//Search all our collections to see if this UserID is unique
+		canExit := []bool{true, true, true}
+		//User collection
+		userCollection := mongoClient.Database("microservice").Collection("users") //Here's our collection
+		var testAUser AUser
+		theErr := userCollection.FindOne(theContext, bson.M{"userid": theID}).Decode(&testAUser)
+		if theErr != nil {
+			if strings.Contains(theErr.Error(), "no documents in result") {
+				fmt.Printf("It's all good, this document wasn't found for User and our ID is clean.\n")
+				canExit[0] = true
+			} else {
+				fmt.Printf("DEBUG: We have another error for finding a unique UserID: \n%v\n", theErr)
+				canExit[0] = false
+				log.Fatal(theErr)
+			}
+		}
+		//Check Messageboard collection
+		messageBoardCollection := mongoClient.Database("microservice").Collection("messageboard") //Here's our collection
+		var testMessageBoard MessageBoard
+		//Give 0 values to determine if these IDs are found
+		theFilter := bson.M{
+			"$or": []interface{}{
+				bson.M{"messageboardid": theID},
+			},
+		}
+		theErr = messageBoardCollection.FindOne(theContext, theFilter).Decode(&testMessageBoard)
+		if theErr != nil {
+			if strings.Contains(theErr.Error(), "no documents in result") {
+				fmt.Printf("It's all good, this document wasn't found for User/Hotdog and our ID is clean.\n")
+				canExit[1] = true
+			} else {
+				fmt.Printf("DEBUG: We have another error for finding a unique UserID: \n%v\n", theErr)
+				canExit[1] = false
+			}
+		}
+		//Check Message collection
+		messagesCollection := mongoClient.Database("microservice").Collection("messages") //Here's our collection
+		var testMessage Message
+		//Give 0 values to determine if these IDs are found
+		theFilter2 := bson.M{
+			"$or": []interface{}{
+				bson.M{"messageid": theID},
+				bson.M{"userid": theID},
+				bson.M{"parentmessageid": theID},
+				bson.M{"uberparentid": theID},
+			},
+		}
+		theErr = messagesCollection.FindOne(theContext, theFilter2).Decode(&testMessage)
+		if theErr != nil {
+			if strings.Contains(theErr.Error(), "no documents in result") {
+				canExit[2] = true
+				fmt.Printf("It's all good, this document wasn't found for User/hamburger and our ID is clean.\n")
+			} else {
+				fmt.Printf("DEBUG: We have another error for finding a unique UserID: \n%v\n", theErr)
+				canExit[2] = false
+			}
+		}
+		//Final check to see if we can exit this loop
+		if canExit[0] == true && canExit[1] == true && canExit[2] == true {
+			finalID = theID
+			foundID = true
+		} else {
+			foundID = false
+		}
+	}
+
+	return finalID
+}
+
 //This is a test API we can ping on our Amazon server
 func testPing(w http.ResponseWriter, r *http.Request) {
 	//Initialize struct for taking messages
