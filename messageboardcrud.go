@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -50,8 +51,6 @@ type MessageBoard struct {
 	LastUpdated            string          `json:"LastUpdated"`            //Last time this messageboard was updated
 	DateCreated            string          `json:"DateCreated"`            //Date this board was created
 }
-
-var loadedMessagesMap map[int]Message
 
 /* This is the current amount of results our User is looking at
 it changes as the User clicks forwards or backwards for more results */
@@ -109,6 +108,22 @@ func insertOneNewMessage(w http.ResponseWriter, r *http.Request) {
 			logWriter(errIs)
 		}
 		fmt.Fprint(w, string(theJSONMessage))
+	}
+}
+
+//A simple insert that is called within the CRUD Mircorservice
+func insertOneNewMessageSimple(newMessage Message) {
+	//Send this to the 'message' collection for safekeeping
+	messageCollection := mongoClient.Database("microservice").Collection("messages") //Here's our collection
+	collectedStuff := []interface{}{newMessage}
+	//Insert Our Data
+	_, err := messageCollection.InsertMany(context.TODO(), collectedStuff)
+	if err != nil {
+		theErr := "Error writing insert message in insertOneNewMessageSimple in crudoperations: " + err.Error()
+		logWriter(theErr)
+	} else {
+		theErr := "User successfully inserted message in insertOneNewMessageSimple in crudoperations: "
+		logWriter(theErr)
 	}
 }
 
@@ -200,7 +215,7 @@ func updateOneMessage(w http.ResponseWriter, r *http.Request) {
 	var theMessageUpdate Message
 	json.Unmarshal(bs, &theMessageUpdate)
 
-	//Update User
+	//Update Message
 	theTimeNow := time.Now()
 	messageCollection := mongoClient.Database("microservice").Collection("messages") //Here's our collection
 	theFilter := bson.M{
@@ -262,6 +277,451 @@ func updateOneMessage(w http.ResponseWriter, r *http.Request) {
 		}
 		fmt.Fprint(w, string(theJSONMessage))
 	}
+}
+
+//Simple update to one message,(called from this Microservice)
+func updateOneMessageSimple(updatedMessage Message) {
+	//Update Message
+	theTimeNow := time.Now()
+	messageCollection := mongoClient.Database("microservice").Collection("messages") //Here's our collection
+	theFilter := bson.M{
+		"messageid": bson.M{
+			"$eq": updatedMessage.MessageID,
+		},
+	}
+	updatedDocument := bson.M{
+		"$set": bson.M{
+			"messageid":       updatedMessage.MessageID,
+			"userid":          updatedMessage.UserID,
+			"postername":      updatedMessage.PosterName,
+			"messages":        updatedMessage.Messages,
+			"ischild":         updatedMessage.IsChild,
+			"haschildren":     updatedMessage.HasChildren,
+			"parentmessageid": updatedMessage.ParentMessageID,
+			"uberparentid":    updatedMessage.UberParentID,
+			"order":           updatedMessage.Order,
+			"repliesamount":   updatedMessage.RepliesAmount,
+			"themessage":      updatedMessage.TheMessage,
+			"whatboard":       updatedMessage.WhatBoard,
+			"datecreated":     updatedMessage.DateCreated,
+			"lastupdated":     theTimeNow.Format("2006-01-02 15:04:05"),
+		},
+	}
+	_, err2 := messageCollection.UpdateOne(theContext, theFilter, updatedDocument)
+	if err2 != nil {
+		message := "Got an error updating a message in updateOneMessageSimple: " + err2.Error()
+		fmt.Println(message)
+		logWriter(message)
+	} else {
+		message := "We updated the document successfully"
+		fmt.Println(message)
+		logWriter(message)
+	}
+}
+
+//This func updates the Mongo MessageBoard collection to what we have now
+func updateMongoMessageBoard(w http.ResponseWriter, r *http.Request) {
+	//This is the return message
+	type ReturnMessage struct {
+		TheErr     []string `json:"TheErr"`
+		ResultMsg  []string `json:"ResultMsg"`
+		SuccOrFail int      `json:"SuccOrFail"`
+	}
+	theReturnMessage := ReturnMessage{}
+	theReturnMessage.SuccOrFail = 0 //Declare this first to check against failure when returning response
+
+	type UpdatedMongoBoard struct {
+		UpdatedMessageBoard MessageBoard `json:"UpdatedMessageBoard"`
+	}
+	//Unwrap from JSON
+	bs, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		theErr := "Error reading the request from updateMongoMessageBoard: " + err.Error() + "\n" + string(bs)
+		logWriter(theErr)
+		fmt.Println(theErr)
+	}
+
+	//Marshal it into our type
+	var theboardUpdate UpdatedMongoBoard
+	json.Unmarshal(bs, &theboardUpdate)
+
+	message_collection := mongoClient.Database("microservice").Collection("messageboard") //Here's our collection
+	theFilter := bson.M{
+		"messageboardid": bson.M{
+			"$eq": theboardUpdate.UpdatedMessageBoard.MessageBoardID, // check if test value is present for reply Message
+		},
+		"boardname": bson.M{
+			"$eq": theboardUpdate.UpdatedMessageBoard.BoardName, // check if test value is present for reply Message
+		},
+	}
+
+	updatedDocument := bson.M{}
+	updatedDocument = bson.M{
+		"$set": bson.M{
+			"messageboardid":         theboardUpdate.UpdatedMessageBoard.MessageBoardID,
+			"boardname":              theboardUpdate.UpdatedMessageBoard.BoardName,
+			"allmessages":            theboardUpdate.UpdatedMessageBoard.AllMessages,
+			"allmessagesmap":         theboardUpdate.UpdatedMessageBoard.AllMessagesMap,
+			"alloriginalmessages":    theboardUpdate.UpdatedMessageBoard.AllOriginalMessages,
+			"alloriginalmessagesmap": theboardUpdate.UpdatedMessageBoard.AllOriginalMessagesMap,
+			"lastupdated":            theboardUpdate.UpdatedMessageBoard.LastUpdated,
+			"datecreated":            theboardUpdate.UpdatedMessageBoard.DateCreated,
+		},
+	}
+
+	stuffUpdated, err2 := message_collection.UpdateOne(theContext, theFilter, updatedDocument)
+	if err2 != nil {
+		message := "We got an error updating this document: " + err2.Error()
+		fmt.Println(message)
+		logWriter(message)
+		theReturnMessage.TheErr = append(theReturnMessage.TheErr, message)
+		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, message)
+		theReturnMessage.SuccOrFail = 1
+	} else {
+		theInt := strconv.Itoa(int(stuffUpdated.MatchedCount))
+		message := "Here is the update for our messageboard: " + theInt
+		fmt.Println(message)
+		logWriter(message)
+		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, message)
+	}
+
+	//Determine if we have an error yet and what to return
+	if theReturnMessage.SuccOrFail != 0 {
+		//Log a failure and return the failure
+		aMessage := "Failure updating hotdog or hamburger messageboards"
+		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, aMessage)
+		theReturnMessage.TheErr = append(theReturnMessage.TheErr, aMessage)
+	} else {
+		aMessage := "Success updating hotdog and hamburger messageboards"
+		theReturnMessage.SuccOrFail = 0
+		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, aMessage)
+	}
+
+	//Write the Reponse back
+	theJSONMessage, err := json.Marshal(theReturnMessage)
+	//Send the response back
+	if err != nil {
+		errIs := "Error formatting JSON for return in isMessageBoardCreated: " + err.Error()
+		logWriter(errIs)
+	}
+	fmt.Fprint(w, string(theJSONMessage))
+}
+
+/*This func is a simple update of the messageboards, no API needed
+(Returns a bool for a failure and a string for failure/success messages)
+*/
+func updateMongoMessageBoardSimple(updatedMessageBoard MessageBoard) (bool, string) {
+	//Declare variables for logging to return
+	goodUpdate, updateRecord := true, ""
+
+	message_collection := mongoClient.Database("microservice").Collection("messageboard") //Here's our collection
+	theFilter := bson.M{
+		"messageboardid": bson.M{
+			"$eq": updatedMessageBoard.MessageBoardID, // check if test value is present for reply Message
+		},
+		"boardname": bson.M{
+			"$eq": updatedMessageBoard.BoardName, // check if test value is present for reply Message
+		},
+	}
+
+	updatedDocument := bson.M{}
+	updatedDocument = bson.M{
+		"$set": bson.M{
+			"messageboardid":         updatedMessageBoard.MessageBoardID,
+			"boardname":              updatedMessageBoard.BoardName,
+			"allmessages":            updatedMessageBoard.AllMessages,
+			"allmessagesmap":         updatedMessageBoard.AllMessagesMap,
+			"alloriginalmessages":    updatedMessageBoard.AllOriginalMessages,
+			"alloriginalmessagesmap": updatedMessageBoard.AllOriginalMessagesMap,
+			"lastupdated":            updatedMessageBoard.LastUpdated,
+			"datecreated":            updatedMessageBoard.DateCreated,
+		},
+	}
+
+	stuffUpdated, err2 := message_collection.UpdateOne(theContext, theFilter, updatedDocument)
+	if err2 != nil {
+		message := "We got an error updating this document: " + err2.Error()
+		fmt.Println(message)
+		updateRecord = updateRecord + message
+		goodUpdate = false
+	} else {
+		theInt := strconv.Itoa(int(stuffUpdated.MatchedCount))
+		message := "Here is the update for our messageboard: " + theInt
+		fmt.Println(message)
+		updateRecord = updateRecord + message
+	}
+
+	return goodUpdate, updateRecord
+}
+
+//This updates the entirety of the messageboard and returns it to the mainpage Microservice
+func uberUpdate(w http.ResponseWriter, r *http.Request) {
+	theTimeNow := time.Now() //Used for time updates
+	//Return message
+	type ReturnMessage struct {
+		TheErr             []string        `json:"TheErr"`
+		ResultMsg          []string        `json:"ResultMsg"`
+		SuccOrFail         int             `json:"SuccOrFail"`
+		GivenHDogMB        MessageBoard    `json:"GivenHDogMB"`
+		GivenHamMB         MessageBoard    `json:"GivenHamMB"`
+		GivenLoadedMapHDog map[int]Message `json:"GivenLoadedMapHDog"`
+		GivenLoadedMapHam  map[int]Message `json:"GivenLoadedMapHam"`
+	}
+	theReturnMessage := ReturnMessage{}
+	theReturnMessage.SuccOrFail = 0 //Declare this first to check against failure when returning response
+	//Declare type we want JSON marshaled into
+	type UberUpdateMessages struct {
+		TheNewestMessage Message         `json:"TheNewestMessage"`
+		TheParentMessage Message         `json:"TheParentMessage"`
+		WhatBoard        string          `json:"WhatBoard"`
+		HotdogMB         MessageBoard    `json:"HotdogMB"`
+		HamburgerMB      MessageBoard    `json:"HamburgerMB"`
+		LoadedMapHDog    map[int]Message `json:"LoadedMapHDog"`
+		LoadedMapHam     map[int]Message `json:"LoadedMapHam"`
+	}
+	//Unwrap from JSON
+	bs, err := ioutil.ReadAll(r.Body)
+	if err != nil {
+		theErr := "Error reading the request from uberUpdate: " + err.Error() + "\n" + string(bs)
+		logWriter(theErr)
+		fmt.Println(theErr)
+	}
+
+	//Marshal it into our type
+	var uberUpdateMessages UberUpdateMessages
+	json.Unmarshal(bs, &uberUpdateMessages)
+
+	/* Begin  the uber update */
+	if uberUpdateMessages.TheParentMessage.IsChild == false {
+		//This is the uberParent; simply add this to the []Message list
+		uberUpdateMessages.TheParentMessage.Messages = append(uberUpdateMessages.TheParentMessage.Messages, uberUpdateMessages.TheNewestMessage)
+		//parentMessage.Messages = append([]Message{newestMessage}, parentMessage.Messages...)
+		uberUpdateMessages.TheParentMessage.RepliesAmount = uberUpdateMessages.TheParentMessage.RepliesAmount + 1
+		uberUpdateMessages.TheParentMessage.HasChildren = true
+		uberUpdateMessages.TheParentMessage.LastUpdated = theTimeNow.Format("2006-01-02 15:04:05")
+		//Update Message in 'messages' table
+		updateOneMessageSimple(uberUpdateMessages.TheParentMessage)
+		//Update the messages tables
+		insertOneNewMessageSimple(uberUpdateMessages.TheNewestMessage)
+		//Update MessageBoard properties, (based on which Messageboard)
+		switch uberUpdateMessages.WhatBoard {
+		case "hotdog":
+			//Initial Clear for no map goofs
+			theReturnMessage.GivenLoadedMapHDog = make(map[int]Message)
+			theReturnMessage.GivenLoadedMapHam = make(map[int]Message)
+
+			uberUpdateMessages.HotdogMB.AllMessagesMap[uberUpdateMessages.TheParentMessage.MessageID] = uberUpdateMessages.TheParentMessage         //Update UberParent
+			uberUpdateMessages.HotdogMB.AllOriginalMessagesMap[uberUpdateMessages.TheParentMessage.MessageID] = uberUpdateMessages.TheParentMessage //updateUberParent
+			uberUpdateMessages.HotdogMB.AllMessages = append(uberUpdateMessages.HotdogMB.AllMessages, uberUpdateMessages.TheNewestMessage)          //Add newest message
+			uberUpdateMessages.HotdogMB.AllMessagesMap[uberUpdateMessages.TheNewestMessage.MessageID] = uberUpdateMessages.TheNewestMessage         //add newest message
+			uberUpdateMessages.HotdogMB.LastUpdated = theTimeNow.Format("2006-01-02 15:04:05")
+			//update uberParent
+			for j := 0; j < len(uberUpdateMessages.HotdogMB.AllOriginalMessages); j++ {
+				if uberUpdateMessages.HotdogMB.AllOriginalMessages[j].MessageID == uberUpdateMessages.TheParentMessage.MessageID {
+					uberUpdateMessages.HotdogMB.AllOriginalMessages[j] = uberUpdateMessages.TheParentMessage
+					//Update the loadedMessageMap
+					uberUpdateMessages.LoadedMapHDog[j+1] = uberUpdateMessages.TheParentMessage
+					break
+				}
+			}
+			//Update Mongo Collections
+			dbUpdateResult, theErr := updateMongoMessageBoardSimple(uberUpdateMessages.HotdogMB)
+			fmt.Printf("DEBUG: Here is how the update Messageboard went: %v and %v\n", dbUpdateResult, theErr)
+
+			//Update the return message with for all of our maps and messageboards
+			theReturnMessage.GivenHDogMB = uberUpdateMessages.HotdogMB
+			theReturnMessage.GivenLoadedMapHDog = uberUpdateMessages.LoadedMapHDog
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, "Updated the hotdog messageboard in uberUpdate")
+			break
+		case "hamburger":
+			//Initial Clear for no map goofs
+			theReturnMessage.GivenLoadedMapHDog = make(map[int]Message)
+			theReturnMessage.GivenLoadedMapHam = make(map[int]Message)
+
+			uberUpdateMessages.HamburgerMB.AllMessagesMap[uberUpdateMessages.TheParentMessage.MessageID] = uberUpdateMessages.TheParentMessage         //Update UberParent
+			uberUpdateMessages.HamburgerMB.AllOriginalMessagesMap[uberUpdateMessages.TheParentMessage.MessageID] = uberUpdateMessages.TheParentMessage //updateUberParent
+			uberUpdateMessages.HamburgerMB.AllMessages = append(uberUpdateMessages.HamburgerMB.AllMessages, uberUpdateMessages.TheNewestMessage)       //Add newest message
+			uberUpdateMessages.HamburgerMB.AllMessagesMap[uberUpdateMessages.TheNewestMessage.MessageID] = uberUpdateMessages.TheNewestMessage         //add newest message
+			uberUpdateMessages.HamburgerMB.LastUpdated = theTimeNow.Format("2006-01-02 15:04:05")
+			//update uberParent
+			for j := 0; j < len(uberUpdateMessages.HamburgerMB.AllOriginalMessages); j++ {
+				if uberUpdateMessages.HamburgerMB.AllOriginalMessages[j].MessageID == uberUpdateMessages.TheParentMessage.MessageID {
+					uberUpdateMessages.HamburgerMB.AllOriginalMessages[j] = uberUpdateMessages.TheParentMessage
+					//Update the loadedMessageMap
+					uberUpdateMessages.LoadedMapHam[j+1] = uberUpdateMessages.TheParentMessage
+					break
+				}
+			}
+			//Update Mongo Collections
+			dbUpdateResult, theErr := updateMongoMessageBoardSimple(uberUpdateMessages.HamburgerMB)
+			fmt.Printf("DEBUG: Here is how the update Messageboard went: %v and %v\n", dbUpdateResult, theErr)
+			//Update the return message with for all of our maps and messageboards
+			theReturnMessage.GivenHamMB = uberUpdateMessages.HamburgerMB
+			theReturnMessage.GivenLoadedMapHam = uberUpdateMessages.LoadedMapHam
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, "Updated the hamburger messageboard in uberUpdate")
+			break
+		default:
+			//Wrong board entered...write the error
+			message := "Wrong board entered in uberUpdate: " + uberUpdateMessages.WhatBoard
+			theReturnMessage.SuccOrFail = 1
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, message)
+			theReturnMessage.TheErr = append(theReturnMessage.TheErr, message)
+			break
+		}
+	} else {
+		//Add newest message to parent message to update it
+		uberUpdateMessages.TheParentMessage.HasChildren = true //Had it or before, now this has children
+		uberUpdateMessages.TheParentMessage.RepliesAmount = uberUpdateMessages.TheParentMessage.RepliesAmount + 1
+		uberUpdateMessages.TheParentMessage.Messages = append(uberUpdateMessages.TheParentMessage.Messages, uberUpdateMessages.TheNewestMessage)
+		uberUpdateMessages.TheParentMessage.LastUpdated = theTimeNow.Format("2006-01-02 15:04:05")
+		//Update Message in 'messages' table
+		updateOneMessageSimple(uberUpdateMessages.TheParentMessage)
+		//Insert new Message
+		insertOneNewMessageSimple(uberUpdateMessages.TheNewestMessage)
+		//Update MessageBoard properties, (based on which Messageboard)
+		switch uberUpdateMessages.WhatBoard {
+		case "hotdog":
+			//Search our message board for the Uber Parent
+			uberParentMessage := uberUpdateMessages.HotdogMB.AllOriginalMessagesMap[uberUpdateMessages.TheParentMessage.UberParentID]
+			//Update all parent messages recursivley until we finally update the uberParentMessage
+			uberParentMessage, uberUpdateMessages.HotdogMB = updateToUber(uberParentMessage, uberUpdateMessages.TheParentMessage, uberUpdateMessages.HotdogMB)
+			fmt.Printf("DEBUG: Here is our UberParent Update: %v\n", uberParentMessage)
+			fmt.Println()
+			fmt.Println()
+			//Update MessageBoard properties
+			uberUpdateMessages.HotdogMB.AllMessagesMap[uberParentMessage.MessageID] = uberParentMessage                                                  //Update UberParent
+			uberUpdateMessages.HotdogMB.AllOriginalMessagesMap[uberParentMessage.MessageID] = uberParentMessage                                          //updateUberParent
+			uberUpdateMessages.HotdogMB.AllMessages = append([]Message{uberUpdateMessages.TheNewestMessage}, uberUpdateMessages.HotdogMB.AllMessages...) //Add newest message
+			uberUpdateMessages.HotdogMB.AllMessagesMap[uberUpdateMessages.TheNewestMessage.MessageID] = uberUpdateMessages.TheNewestMessage              //add newest message
+			uberUpdateMessages.HotdogMB.LastUpdated = theTimeNow.Format("2006-01-02 15:04:05")
+			//update uberParent
+			for j := 0; j < len(uberUpdateMessages.HotdogMB.AllOriginalMessages); j++ {
+				if uberUpdateMessages.HotdogMB.AllOriginalMessages[j].MessageID == uberParentMessage.MessageID {
+					uberUpdateMessages.HotdogMB.AllOriginalMessages[j] = uberParentMessage
+					//Update the loadedMessageMap
+					uberUpdateMessages.LoadedMapHDog[j+1] = uberParentMessage
+				}
+			}
+
+			//Update Mongo Collections
+			updateMongoMessageBoardSimple(uberUpdateMessages.HotdogMB)
+			//Update Message in 'messages' table
+			updateOneMessageSimple(uberParentMessage)
+
+			//Update the return message with for all of our maps and messageboards
+			theReturnMessage.GivenHDogMB = uberUpdateMessages.HotdogMB
+			theReturnMessage.GivenLoadedMapHDog = uberUpdateMessages.LoadedMapHDog
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, "Updated the hotdog messageboard in uberUpdate")
+			break
+		case "hamburger":
+			//Search our message board for the Uber Parent
+			uberParentMessage := uberUpdateMessages.HamburgerMB.AllOriginalMessagesMap[uberUpdateMessages.TheParentMessage.UberParentID]
+			//Update all parent messages recursivley until we finally update the uberParentMessage
+			uberParentMessage, uberUpdateMessages.HamburgerMB = updateToUber(uberParentMessage, uberUpdateMessages.TheParentMessage, uberUpdateMessages.HamburgerMB)
+			//Update MessageBoard properties
+			uberUpdateMessages.HamburgerMB.AllMessagesMap[uberParentMessage.MessageID] = uberParentMessage                                                     //Update UberParent
+			uberUpdateMessages.HamburgerMB.AllOriginalMessagesMap[uberParentMessage.MessageID] = uberParentMessage                                             //updateUberParent
+			uberUpdateMessages.HamburgerMB.AllMessages = append([]Message{uberUpdateMessages.TheNewestMessage}, uberUpdateMessages.HamburgerMB.AllMessages...) //Add newest message
+			uberUpdateMessages.HamburgerMB.AllMessagesMap[uberUpdateMessages.TheNewestMessage.MessageID] = uberUpdateMessages.TheNewestMessage                 //add newest message
+			uberUpdateMessages.HamburgerMB.LastUpdated = theTimeNow.Format("2006-01-02 15:04:05")
+			//update uberParent
+			for j := 0; j < len(uberUpdateMessages.HamburgerMB.AllOriginalMessages); j++ {
+				if uberUpdateMessages.HamburgerMB.AllOriginalMessages[j].MessageID == uberParentMessage.MessageID {
+					uberUpdateMessages.HamburgerMB.AllOriginalMessages[j] = uberParentMessage
+					//Update the loadedMessageMap
+					uberUpdateMessages.LoadedMapHam[j+1] = uberParentMessage
+				}
+			}
+
+			//Update Mongo Collections
+			updateMongoMessageBoardSimple(uberUpdateMessages.HamburgerMB)
+			//Update Message in 'messages' table
+			updateOneMessageSimple(uberParentMessage)
+
+			//Update the return message with for all of our maps and messageboards
+			theReturnMessage.GivenHamMB = uberUpdateMessages.HamburgerMB
+			theReturnMessage.GivenLoadedMapHam = uberUpdateMessages.LoadedMapHam
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, "Updated the Hamburger messageboard in uberUpdate")
+			break
+		default:
+			message := "Wrong board entered in uberUpdate: " + uberUpdateMessages.WhatBoard
+			theReturnMessage.SuccOrFail = 1
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, message)
+			theReturnMessage.TheErr = append(theReturnMessage.TheErr, message)
+			break
+		}
+	}
+	//Write the Reponse back
+	theJSONMessage, err := json.Marshal(theReturnMessage)
+	//Send the response back
+	if err != nil {
+		errIs := "Error formatting JSON for return in uberUpdate: " + err.Error()
+		logWriter(errIs)
+	}
+	fmt.Fprint(w, string(theJSONMessage))
+}
+
+//This func finds the parent FROM THE UBERPARENT to update; called from within this service
+func updateToUber(uberParentMessage Message, parentMessage Message, theboard MessageBoard) (Message, MessageBoard) {
+	theTimeNow := time.Now()      //Used for updating time properties in our parent
+	uberParentUpdated := false    //Are we currently on the UberParent Message, matching their ID?
+	finalUberMessage := Message{} //The final message with the updated UberParent
+	//Loop and update until we find the UberParent and update it into the 'finalUberMessage'
+	pastParent := parentMessage
+	currentMessage := theboard.AllMessagesMap[parentMessage.ParentMessageID] //First set the searcher parent to it's OWN parent
+	for {
+		if uberParentUpdated == true {
+			break //UberParent is found and updated, ready to be returned. End this updating search
+		} else {
+			/* Determine if the current parent is an uberParent */
+			if currentMessage.MessageID == uberParentMessage.MessageID {
+				//This is the parent update UberParent for us to return and update in Mongo, then break!
+				uberParentUpdated = true //Set break value
+				/* Step 1: Update the parentMessage in the UberParent */
+				for v := 0; v < len(currentMessage.Messages); v++ {
+					//Search fo rparent in UberParent Messages then update it
+					if currentMessage.Messages[v].MessageID == pastParent.MessageID {
+						currentMessage.Messages[v] = pastParent
+						break
+					}
+				}
+				/* Step 2: Update the Past Parent in the the messageboard table */
+				pastParent.LastUpdated = theTimeNow.Format("2006-01-02 15:04:05")
+				theboard.AllMessagesMap[pastParent.MessageID] = pastParent
+				/* DEBUG: We should add a goroutine to update other sections of the MessageBoard
+				that ARENT' maps and quickly updated */
+				/* Step 2: Update finalUberMessage to return for final updating */
+				finalUberMessage = currentMessage
+			} else {
+				/*
+					This is not the UberParent. We will update the currentMessage in all appropriate spots,
+					THEN we will assign the currentMessage as the ParentID, then move this currentMessage to
+					be the 'pastParent'
+				*/
+				//Step 1: Update the currentMessage's Message Array with the updated parentMessage
+				for x := 0; x < len(currentMessage.Messages); x++ {
+					if currentMessage.Messages[x].MessageID == pastParent.MessageID {
+						//We found the pastParent in the currentMessage Messages array. Update it
+						pastParent.LastUpdated = theTimeNow.Format("2006-01-02 15:04:05")
+						currentMessage.Messages[x] = pastParent
+						break
+					}
+				}
+				//Step 2: Update the messageBoard so we won't have infinite loops
+				currentMessage.LastUpdated = theTimeNow.Format("2006-01-02 15:04:05")
+				pastParent.LastUpdated = theTimeNow.Format("2006-01-02 15:04:05")
+				theboard.AllMessagesMap[currentMessage.MessageID] = currentMessage
+				theboard.AllMessagesMap[pastParent.MessageID] = pastParent
+				/* DEBUG: We should add a goroutine to update other sections of the MessageBoard
+				that ARENT' maps and quickly updated */
+				/* Step 3: Update the search criteria until we hit the uberParent */
+				pastParent = currentMessage
+				currentMessage = theboard.AllMessagesMap[currentMessage.ParentMessageID] //First set the searcher parent to it's OWN parent
+			}
+		}
+	}
+
+	return finalUberMessage, theboard //This should be the completed UberMessage
 }
 
 //Returns true if our test message board is already created

@@ -45,14 +45,17 @@ func handleRequests() {
 	fmt.Println(debugMessage)
 	logWriter(debugMessage)
 	//Mongo No-SQL Stuff
-	myRouter.HandleFunc("/testPing", testPing).Methods("POST")                       //Test a post to this server
-	myRouter.HandleFunc("/addUser", addUser).Methods("POST")                         //add a User
-	myRouter.HandleFunc("/deleteUser", deleteUser).Methods("POST")                   //Delete a User
-	myRouter.HandleFunc("/updateUser", updateUser).Methods("POST")                   //update a User
-	myRouter.HandleFunc("/insertOneNewMessage", insertOneNewMessage).Methods("POST") //insert a Message
-	myRouter.HandleFunc("/deleteOneMessage", deleteOneMessage).Methods("POST")       //Delete a Message
-	myRouter.HandleFunc("/updateOneMessage", updateOneMessage).Methods("POST")       //update a Message
-	myRouter.HandleFunc("/giveAllUsernames", giveAllUsernames).Methods("GET")        //Return allUsernames
+	myRouter.HandleFunc("/testPing", testPing).Methods("POST")                               //Test a post to this server
+	myRouter.HandleFunc("/addUser", addUser).Methods("POST")                                 //add a User
+	myRouter.HandleFunc("/deleteUser", deleteUser).Methods("POST")                           //Delete a User
+	myRouter.HandleFunc("/updateUser", updateUser).Methods("POST")                           //update a User
+	myRouter.HandleFunc("/insertOneNewMessage", insertOneNewMessage).Methods("POST")         //insert a Message
+	myRouter.HandleFunc("/deleteOneMessage", deleteOneMessage).Methods("POST")               //Delete a Message
+	myRouter.HandleFunc("/updateOneMessage", updateOneMessage).Methods("POST")               //update a Message
+	myRouter.HandleFunc("/uberUpdate", uberUpdate).Methods("POST")                           //update messages after a reply
+	myRouter.HandleFunc("/updateMongoMessageBoard", updateMongoMessageBoard).Methods("POST") //update a Messageboard
+	myRouter.HandleFunc("/giveAllUsernames", giveAllUsernames).Methods("GET")                //Return allUsernames
+	myRouter.HandleFunc("/isMessageBoardCreated", isMessageBoardCreated).Methods("GET")      //Return messageboards
 	//Field Validation Stuff
 	myRouter.HandleFunc("/randomIDCreationAPI", randomIDCreationAPI).Methods("GET") //update a Message
 	myRouter.HandleFunc("/userLogin", userLogin).Methods("POST")                    //update a Message
