@@ -52,10 +52,6 @@ type MessageBoard struct {
 	DateCreated            string          `json:"DateCreated"`            //Date this board was created
 }
 
-/* This is the current amount of results our User is looking at
-it changes as the User clicks forwards or backwards for more results */
-var currentPageNumber int = 1
-
 //Inserts one message into our 'messages' collection
 func insertOneNewMessage(w http.ResponseWriter, r *http.Request) {
 	//Unwrap from JSON
