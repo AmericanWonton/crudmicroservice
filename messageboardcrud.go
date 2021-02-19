@@ -403,6 +403,25 @@ func updateMongoMessageBoard(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, string(theJSONMessage))
 }
 
+/* This func creates a Messageboard, if it isn't already created
+it can be called within this Microservice */
+func insertMongoMessageBoardSimple(theMessageBoard MessageBoard) {
+	//Send this to the 'message' collection for safekeeping
+	messageCollection := mongoClient.Database("microservice").Collection("messageboard") //Here's our collection
+	collectedStuff := []interface{}{theMessageBoard}
+	//Insert Our Data
+	_, err := messageCollection.InsertMany(context.TODO(), collectedStuff)
+	if err != nil {
+		theErr := "Error writing insert message in insertMongoMessageBoardSimple in crudoperations: " + err.Error()
+		logWriter(theErr)
+	} else {
+		theErr := "Messageboard successfully inserted message in insertMongoMessageBoardSimple in crudoperations: "
+		logWriter(theErr)
+	}
+
+	wg.Done()
+}
+
 /*This func is a simple update of the messageboards, no API needed
 (Returns a bool for a failure and a string for failure/success messages)
 */
@@ -759,6 +778,9 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 				DateCreated:    theTimeNow.Format("2006-01-02 15:04:05"),
 			}
 			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
+			//Inser the messageboard
+			wg.Add(1)
+			go insertMongoMessageBoardSimple(theReturnMessage.GivenHDogMB)
 		} else {
 			themessage := "Error getting the hotdog database: " + err.Error()
 			logWriter(themessage)
@@ -806,6 +828,9 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 				DateCreated:    theTimeNow.Format("2006-01-02 15:04:05"),
 			}
 			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
+			//Inser the messageboard
+			wg.Add(1)
+			go insertMongoMessageBoardSimple(theReturnMessage.GivenHamMB)
 		} else {
 			themessage := "Error getting the hamburger database: " + err.Error()
 			logWriter(themessage)
@@ -843,6 +868,7 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, aMessage)
 	}
 
+	wg.Done() //Used for go routines
 	//Write the Reponse back
 	theJSONMessage, err := json.Marshal(theReturnMessage)
 	//Send the response back

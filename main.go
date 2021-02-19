@@ -7,10 +7,14 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/gorilla/mux"
 )
+
+//Here is our waitgroup
+var wg sync.WaitGroup
 
 //Parse our templates
 func init() {
