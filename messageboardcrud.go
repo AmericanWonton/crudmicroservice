@@ -406,6 +406,7 @@ func updateMongoMessageBoard(w http.ResponseWriter, r *http.Request) {
 /* This func creates a Messageboard, if it isn't already created
 it can be called within this Microservice */
 func insertMongoMessageBoardSimple(theMessageBoard MessageBoard) {
+	fmt.Println("DEBUG: we are in insertMongoMessageBOardSimple")
 	//Send this to the 'message' collection for safekeeping
 	messageCollection := mongoClient.Database("microservice").Collection("messageboard") //Here's our collection
 	collectedStuff := []interface{}{theMessageBoard}
@@ -414,12 +415,12 @@ func insertMongoMessageBoardSimple(theMessageBoard MessageBoard) {
 	if err != nil {
 		theErr := "Error writing insert message in insertMongoMessageBoardSimple in crudoperations: " + err.Error()
 		logWriter(theErr)
+		fmt.Println(theErr)
 	} else {
 		theErr := "Messageboard successfully inserted message in insertMongoMessageBoardSimple in crudoperations: "
 		logWriter(theErr)
+		fmt.Println(theErr)
 	}
-
-	wg.Done()
 }
 
 /*This func is a simple update of the messageboards, no API needed
@@ -759,18 +760,14 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 	//Find the hotdog messageboard
 	messageCollectionHD := mongoClient.Database("microservice").Collection("messageboard") //Here's our collection
 	//Query Mongo for all Messages
-	theFilterHD := bson.M{
-		"boardname": bson.M{
-			"$eq": "hotdog", // check if bool field has value of 'false'
-		},
-	}
+	theFilterHD := bson.M{"boardname": "hotdog"}
 	findOptionsHD := options.Find()
 	messageBoardHD, err := messageCollectionHD.Find(theContext, theFilterHD, findOptionsHD)
 	if err != nil {
 		if strings.Contains(err.Error(), "no documents in result") {
 			themessage := "No document returned; creating hotdog messageboard"
 			logWriter(themessage)
-
+			fmt.Println(themessage)
 			theReturnMessage.GivenHDogMB = MessageBoard{
 				MessageBoardID: randomIDCreationAPISimple(),
 				BoardName:      "hotdog",
@@ -778,49 +775,66 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 				DateCreated:    theTimeNow.Format("2006-01-02 15:04:05"),
 			}
 			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
-			//Inser the messageboard
-			wg.Add(1)
-			go insertMongoMessageBoardSimple(theReturnMessage.GivenHDogMB)
+			//Insert the messageboard
+			insertMongoMessageBoardSimple(theReturnMessage.GivenHDogMB)
 		} else {
 			themessage := "Error getting the hotdog database: " + err.Error()
 			logWriter(themessage)
 			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
 			theReturnMessage.TheErr = append(theReturnMessage.TheErr, themessage)
 			theReturnMessage.SuccOrFail = 1
+			fmt.Println(themessage)
 		}
+		fmt.Printf("Here's our error: %v\n", err.Error())
 	} else {
 		// create a value into which the single document can be decoded
 		var aMessageBoard MessageBoard
 		//Loop over query results and fill hotdogs array
+		theFind := 0
 		for messageBoardHD.Next(theContext) {
 			err := messageBoardHD.Decode(&aMessageBoard)
 			if err != nil {
-				errmsg := "Error decoding messageboard in MongoDB for all Users: " + err.Error()
+				errmsg := "Error decoding messageboard in MongoDB: " + err.Error()
 				fmt.Println(errmsg)
 				logWriter(errmsg)
 			}
 			//Assign our message board to the 'theMessageBoard' to work with
 			theReturnMessage.GivenHDogMB = aMessageBoard
+			fmt.Println("DEBUG: Assigned this messageboard")
+			fmt.Printf("DEBUG: Here is our example hotdog board: %v\n", aMessageBoard)
+			theFind = theFind + 1
 		}
 		// Close the cursor once finished
 		messageBoardHD.Close(theContext)
+		//Add messageboard if it isn't created
+		if theFind == 0 {
+			themessage := "No messageboard for hotdogs, creating one"
+			theReturnMessage.GivenHDogMB = MessageBoard{
+				MessageBoardID: randomIDCreationAPISimple(),
+				BoardName:      "hotdog",
+				LastUpdated:    theTimeNow.Format("2006-01-02 15:04:05"),
+				DateCreated:    theTimeNow.Format("2006-01-02 15:04:05"),
+			}
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
+			//Insert the messageboard
+			insertMongoMessageBoardSimple(theReturnMessage.GivenHDogMB)
+		} else {
+			//Nothing needed
+		}
+		fmt.Printf("DEBUG: Here is the messageboard: %v\n", aMessageBoard)
 	}
 
 	//Find the hamburger messageboard
 	messageCollectionHam := mongoClient.Database("microservice").Collection("messageboard") //Here's our collection
 	//Query Mongo for all Messages
-	theFilterHam := bson.M{
-		"boardname": bson.M{
-			"$eq": "hamburger", // check if bool field has value of 'false'
-		},
-	}
+	theFilterHam := bson.M{"boardname": "hamburger"}
 	findOptionsHam := options.Find()
 	messageBoardHam, err := messageCollectionHam.Find(theContext, theFilterHam, findOptionsHam)
 	if err != nil {
 		if strings.Contains(err.Error(), "no documents in result") {
 			themessage := "No document returned; creating hamburger messageboard"
 			logWriter(themessage)
-
+			fmt.Println(themessage)
 			theReturnMessage.GivenHamMB = MessageBoard{
 				MessageBoardID: randomIDCreationAPISimple(),
 				BoardName:      "hamburger",
@@ -828,20 +842,21 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 				DateCreated:    theTimeNow.Format("2006-01-02 15:04:05"),
 			}
 			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
-			//Inser the messageboard
-			wg.Add(1)
-			go insertMongoMessageBoardSimple(theReturnMessage.GivenHamMB)
+			//Insert the messageboard
+			insertMongoMessageBoardSimple(theReturnMessage.GivenHamMB)
 		} else {
 			themessage := "Error getting the hamburger database: " + err.Error()
 			logWriter(themessage)
 			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
 			theReturnMessage.TheErr = append(theReturnMessage.TheErr, themessage)
 			theReturnMessage.SuccOrFail = 1
+			fmt.Printf("DEBUG: %v\n", themessage)
 		}
 	} else {
 		// create a value into which the single document can be decoded
 		var aMessageBoard MessageBoard
 		//Loop over query results and fill hotdogs array
+		theFind := 0
 		for messageBoardHam.Next(theContext) {
 			err := messageBoardHam.Decode(&aMessageBoard)
 			if err != nil {
@@ -851,9 +866,25 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 			}
 			//Assign our message board to the 'theMessageBoard' to work with
 			theReturnMessage.GivenHamMB = aMessageBoard
+			fmt.Println("DEBUG: Created a ham messsageboard")
+			theFind = theFind + 1
 		}
 		// Close the cursor once finished
 		messageBoardHam.Close(theContext)
+		if theFind == 0 {
+			themessage := "No messageboard for hotdogs, creating one"
+			theReturnMessage.GivenHamMB = MessageBoard{
+				MessageBoardID: randomIDCreationAPISimple(),
+				BoardName:      "hamburger",
+				LastUpdated:    theTimeNow.Format("2006-01-02 15:04:05"),
+				DateCreated:    theTimeNow.Format("2006-01-02 15:04:05"),
+			}
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
+			//Insert the messageboard
+			insertMongoMessageBoardSimple(theReturnMessage.GivenHamMB)
+		} else {
+			//Nothing needed
+		}
 	}
 
 	//Determine if we have an error yet and what to return
@@ -868,7 +899,6 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, aMessage)
 	}
 
-	wg.Done() //Used for go routines
 	//Write the Reponse back
 	theJSONMessage, err := json.Marshal(theReturnMessage)
 	//Send the response back
