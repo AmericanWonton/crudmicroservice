@@ -470,6 +470,16 @@ func userLogin(w http.ResponseWriter, req *http.Request) {
 			theResponseMessage.TheUser = theUserReturned
 		}
 	}
+	//Do final check for User returned
+	if len(theResponseMessage.TheUser.UserName) <= 0 || len(theResponseMessage.TheUser.Password) <= 0 {
+		themessage := "Username or password not returned; no User found! Username: " + theResponseMessage.TheUser.UserName +
+			" Password: " + theResponseMessage.TheUser.Password
+		fmt.Println(themessage)
+		logWriter(themessage)
+		theResponseMessage.TheErr = themessage
+		theResponseMessage.ResultMsg = themessage
+		theResponseMessage.SuccOrFail = 1
+	}
 	//Errors/Success are recorded, User given, send JSON back
 	theJSONMessage, err := json.Marshal(theResponseMessage)
 	//Send the response back
