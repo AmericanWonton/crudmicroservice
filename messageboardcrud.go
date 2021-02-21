@@ -341,6 +341,8 @@ func updateMongoMessageBoard(w http.ResponseWriter, r *http.Request) {
 	var theboardUpdate UpdatedMongoBoard
 	json.Unmarshal(bs, &theboardUpdate)
 
+	fmt.Printf("DEBUG: Here is the board we got: %v\n", theboardUpdate)
+
 	message_collection := mongoClient.Database("microservice").Collection("messageboard") //Here's our collection
 	theFilter := bson.M{
 		"messageboardid": bson.M{
@@ -368,6 +370,13 @@ func updateMongoMessageBoard(w http.ResponseWriter, r *http.Request) {
 	stuffUpdated, err2 := message_collection.UpdateOne(theContext, theFilter, updatedDocument)
 	if err2 != nil {
 		message := "We got an error updating this document: " + err2.Error()
+		fmt.Println(message)
+		logWriter(message)
+		theReturnMessage.TheErr = append(theReturnMessage.TheErr, message)
+		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, message)
+		theReturnMessage.SuccOrFail = 1
+	} else if stuffUpdated.MatchedCount <= 0 {
+		message := "No messageboard updated!"
 		fmt.Println(message)
 		logWriter(message)
 		theReturnMessage.TheErr = append(theReturnMessage.TheErr, message)
@@ -800,8 +809,6 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 			}
 			//Assign our message board to the 'theMessageBoard' to work with
 			theReturnMessage.GivenHDogMB = aMessageBoard
-			fmt.Println("DEBUG: Assigned this messageboard")
-			fmt.Printf("DEBUG: Here is our example hotdog board: %v\n", aMessageBoard)
 			theFind = theFind + 1
 		}
 		// Close the cursor once finished
@@ -821,7 +828,6 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 		} else {
 			//Nothing needed
 		}
-		fmt.Printf("DEBUG: Here is the messageboard: %v\n", aMessageBoard)
 	}
 
 	//Find the hamburger messageboard
@@ -866,7 +872,6 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 			}
 			//Assign our message board to the 'theMessageBoard' to work with
 			theReturnMessage.GivenHamMB = aMessageBoard
-			fmt.Println("DEBUG: Created a ham messsageboard")
 			theFind = theFind + 1
 		}
 		// Close the cursor once finished

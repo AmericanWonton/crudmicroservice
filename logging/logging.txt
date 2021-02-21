@@ -97,3 +97,38 @@ We are now handling requests
 We are now handling requests
 2021/02/18 19:32:30 Messageboard successfully inserted message in insertMongoMessageBoardSimple in crudoperations: 
 2021/02/18 19:32:30 Messageboard successfully inserted message in insertMongoMessageBoardSimple in crudoperations: 
+2021/02/20 14:02:05 
+
+We are now handling requests
+2021/02/20 14:02:40 
+
+We are now handling requests
+2021/02/20 14:02:58 
+
+We are now handling requests
+2021/02/20 14:10:11 
+
+We are now handling requests
+2021/02/20 14:10:29 
+
+We are now handling requests
+2021/02/20 14:10:55 
+
+We are now handling requests
+2021/02/20 14:11:17 
+
+We are now handling requests
+2021/02/20 14:14:22 
+
+We are now handling requests
+2021/02/20 14:31:39 
+
+We are now handling requests
+2021/02/21 10:11:57 
+
+We are now handling requests
+2021/02/21 10:12:34 No messageboard updated!
+2021/02/21 10:14:47 
+
+We are now handling requests
+2021/02/21 10:15:04 Here is the update for our messageboard: 1

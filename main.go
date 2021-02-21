@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -46,6 +47,7 @@ func handleRequests() {
 	myRouter := mux.NewRouter().StrictSlash(true)
 
 	debugMessage := "\n\nWe are now handling requests"
+
 	fmt.Println(debugMessage)
 	logWriter(debugMessage)
 	//Mongo No-SQL Stuff
@@ -74,28 +76,36 @@ func main() {
 	mongoClient = connectDB()
 
 	/* Test JSON Creation */
-	/*
-		theMessageTest := Message{
-			MessageID:       334545,
-			UserID:          445653,
-			PosterName:      "JimUsername",
-			Messages:        []Message{},
-			IsChild:         false,
-			HasChildren:     false,
-			ParentMessageID: 0,
-			UberParentID:    0,
-			Order:           0,
-			RepliesAmount:   0,
-			TheMessage:      "Test message one",
-			DateCreated:     "Uhhh",
-			LastUpdated:     "eaadf",
-		}
+	type UpdatedMongoBoard struct {
+		UpdatedMessageBoard MessageBoard `json:"UpdatedMessageBoard"`
+	}
+	theUpdatedMongoBoard := UpdatedMongoBoard{}
+	theMBTest := MessageBoard{}
+	theMessageTest := Message{
+		MessageID:       334545,
+		UserID:          445653,
+		PosterName:      "JimUsername",
+		Messages:        []Message{},
+		IsChild:         false,
+		HasChildren:     false,
+		ParentMessageID: 0,
+		UberParentID:    0,
+		Order:           0,
+		RepliesAmount:   0,
+		TheMessage:      "Test message one",
+		DateCreated:     "Uhhh",
+		LastUpdated:     "eaadf",
+	}
 
-		yee, _ := json.Marshal(theMessageTest)
+	theMBTest.AllMessages = append(theMBTest.AllMessages, theMessageTest)
+	theMBTest.BoardName = "hotdog"
+	theMBTest.MessageBoardID = 652774270816
 
-		fmt.Printf("DEBUG: \n\n Here is yee: %v\n\n", string(yee))
+	theUpdatedMongoBoard.UpdatedMessageBoard = theMBTest
 
-	*/
+	yee, _ := json.Marshal(theUpdatedMongoBoard)
+
+	fmt.Printf("DEBUG: \n\n Here is yee: %v\n\n", string(yee))
 
 	//Handle Requests
 	handleRequests()

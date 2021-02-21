@@ -415,8 +415,7 @@ func userLogin(w http.ResponseWriter, req *http.Request) {
 	var dataForLogin LoginData
 	json.Unmarshal(bs, &dataForLogin)
 
-	var theUserReturned AUser //Initialize User to be returned after Mongo query
-
+	theUserReturned := AUser{} //Initialize User to be returned after Mongo query
 	//Query for the User, given the userID for the User
 	user_collection := mongoClient.Database("microservice").Collection("users") //Here's our collection
 	theFilter := bson.M{
@@ -427,8 +426,9 @@ func userLogin(w http.ResponseWriter, req *http.Request) {
 			"$eq": dataForLogin.Password,
 		},
 	}
-	findOptions := options.FindOne()
-	findUser := user_collection.FindOne(theContext, theFilter, findOptions)
+	findOptions := options.Find()
+	findUser, err := user_collection.Find(theContext, theFilter, findOptions)
+	theFind := 0 //A counter to track how many users we find
 	if findUser.Err() != nil {
 		if strings.Contains(err.Error(), "no documents in result") {
 			returnedErr := "For " + dataForLogin.Username + ", no User was returned: " + err.Error()
@@ -448,38 +448,60 @@ func userLogin(w http.ResponseWriter, req *http.Request) {
 			theResponseMessage.TheUser = AUser{}
 		}
 	} else {
+		//Set initial values so the decode function dosen't freak out
+		theUserReturned.UserName = ""
+		theUserReturned.Password = ""
 		//Found User, decode to return
-		err := findUser.Decode(&theUserReturned)
-		if err != nil {
-			returnedErr := "For " + dataForLogin.Username +
-				", there was an error decoding document from Mongo: " + err.Error()
-			fmt.Println(returnedErr)
-			logWriter(returnedErr)
-			theResponseMessage.SuccOrFail = 2
-			theResponseMessage.ResultMsg = returnedErr
-			theResponseMessage.TheErr = returnedErr
-			theResponseMessage.TheUser = AUser{}
-		} else {
-			returnedErr := "For " + dataForLogin.Username +
-				", User should be successfully decoded."
-			fmt.Println(returnedErr)
-			logWriter(returnedErr)
-			theResponseMessage.SuccOrFail = 0
-			theResponseMessage.ResultMsg = returnedErr
-			theResponseMessage.TheErr = ""
-			theResponseMessage.TheUser = theUserReturned
+		for findUser.Next(theContext) {
+			err := findUser.Decode(&theUserReturned)
+			if err != nil {
+				returnedErr := "For " + dataForLogin.Username +
+					", there was an error decoding document from Mongo: " + err.Error()
+				fmt.Println(returnedErr)
+				logWriter(returnedErr)
+				theResponseMessage.SuccOrFail = 2
+				theResponseMessage.ResultMsg = returnedErr
+				theResponseMessage.TheErr = returnedErr
+				theResponseMessage.TheUser = AUser{}
+			} else if len(theUserReturned.UserName) <= 1 {
+				returnedErr := "For " + dataForLogin.Username +
+					", there was an no document from Mongo: " + err.Error()
+				fmt.Println(returnedErr)
+				logWriter(returnedErr)
+				theResponseMessage.SuccOrFail = 2
+				theResponseMessage.ResultMsg = returnedErr
+				theResponseMessage.TheErr = returnedErr
+				theResponseMessage.TheUser = AUser{}
+			} else {
+				//Successful decode, do nothing
+			}
+			theFind = theFind + 1
 		}
+		findUser.Close(theContext)
 	}
-	//Do final check for User returned
-	if len(theResponseMessage.TheUser.UserName) <= 0 || len(theResponseMessage.TheUser.Password) <= 0 {
-		themessage := "Username or password not returned; no User found! Username: " + theResponseMessage.TheUser.UserName +
-			" Password: " + theResponseMessage.TheUser.Password
-		fmt.Println(themessage)
-		logWriter(themessage)
-		theResponseMessage.TheErr = themessage
-		theResponseMessage.ResultMsg = themessage
+
+	if theFind <= 0 {
+		//Error, return an error back and log it
+		returnedErr := "For " + dataForLogin.Username +
+			", No User was returned."
+		fmt.Println(returnedErr)
+		logWriter(returnedErr)
 		theResponseMessage.SuccOrFail = 1
+		theResponseMessage.ResultMsg = returnedErr
+		theResponseMessage.TheErr = returnedErr
+		theResponseMessage.TheUser = theUserReturned
+	} else {
+		//Success, log the success and return User
+		returnedErr := "For " + dataForLogin.Username +
+			", User should be successfully decoded."
+		//fmt.Println(returnedErr)
+		logWriter(returnedErr)
+		theResponseMessage.SuccOrFail = 0
+		theResponseMessage.ResultMsg = returnedErr
+		theResponseMessage.TheErr = ""
+		theResponseMessage.TheUser = theUserReturned
 	}
+
 	//Errors/Success are recorded, User given, send JSON back
 	theJSONMessage, err := json.Marshal(theResponseMessage)
 	//Send the response back
@@ -528,7 +550,6 @@ func randomIDCreationAPI(w http.ResponseWriter, req *http.Request) {
 		theErr := userCollection.FindOne(theContext, bson.M{"userid": theID}).Decode(&testAUser)
 		if theErr != nil {
 			if strings.Contains(theErr.Error(), "no documents in result") {
-				fmt.Printf("It's all good, this document wasn't found for User and our ID is clean.\n")
 				canExit[0] = true
 			} else {
 				fmt.Printf("DEBUG: We have another error for finding a unique UserID: \n%v\n", theErr)
@@ -548,7 +569,6 @@ func randomIDCreationAPI(w http.ResponseWriter, req *http.Request) {
 		theErr = messageBoardCollection.FindOne(theContext, theFilter).Decode(&testMessageBoard)
 		if theErr != nil {
 			if strings.Contains(theErr.Error(), "no documents in result") {
-				fmt.Printf("It's all good, this document wasn't found for User/Hotdog and our ID is clean.\n")
 				canExit[1] = true
 			} else {
 				fmt.Printf("DEBUG: We have another error for finding a unique UserID: \n%v\n", theErr)
@@ -571,7 +591,6 @@ func randomIDCreationAPI(w http.ResponseWriter, req *http.Request) {
 		if theErr != nil {
 			if strings.Contains(theErr.Error(), "no documents in result") {
 				canExit[2] = true
-				fmt.Printf("It's all good, this document wasn't found for User/hamburger and our ID is clean.\n")
 			} else {
 				fmt.Printf("DEBUG: We have another error for finding a unique UserID: \n%v\n", theErr)
 				canExit[2] = false
@@ -630,7 +649,6 @@ func randomIDCreationAPISimple() int {
 		theErr := userCollection.FindOne(theContext, bson.M{"userid": theID}).Decode(&testAUser)
 		if theErr != nil {
 			if strings.Contains(theErr.Error(), "no documents in result") {
-				fmt.Printf("It's all good, this document wasn't found for User and our ID is clean.\n")
 				canExit[0] = true
 			} else {
 				fmt.Printf("DEBUG: We have another error for finding a unique UserID: \n%v\n", theErr)
@@ -650,7 +668,6 @@ func randomIDCreationAPISimple() int {
 		theErr = messageBoardCollection.FindOne(theContext, theFilter).Decode(&testMessageBoard)
 		if theErr != nil {
 			if strings.Contains(theErr.Error(), "no documents in result") {
-				fmt.Printf("It's all good, this document wasn't found for User/Hotdog and our ID is clean.\n")
 				canExit[1] = true
 			} else {
 				fmt.Printf("DEBUG: We have another error for finding a unique UserID: \n%v\n", theErr)
@@ -673,7 +690,6 @@ func randomIDCreationAPISimple() int {
 		if theErr != nil {
 			if strings.Contains(theErr.Error(), "no documents in result") {
 				canExit[2] = true
-				fmt.Printf("It's all good, this document wasn't found for User/hamburger and our ID is clean.\n")
 			} else {
 				fmt.Printf("DEBUG: We have another error for finding a unique UserID: \n%v\n", theErr)
 				canExit[2] = false
