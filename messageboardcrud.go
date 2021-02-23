@@ -817,10 +817,14 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 		if theFind == 0 {
 			themessage := "No messageboard for hotdogs, creating one"
 			theReturnMessage.GivenHDogMB = MessageBoard{
-				MessageBoardID: randomIDCreationAPISimple(),
-				BoardName:      "hotdog",
-				LastUpdated:    theTimeNow.Format("2006-01-02 15:04:05"),
-				DateCreated:    theTimeNow.Format("2006-01-02 15:04:05"),
+				MessageBoardID:         randomIDCreationAPISimple(),
+				BoardName:              "hotdog",
+				AllMessages:            []Message{},
+				AllMessagesMap:         make(map[int]Message),
+				AllOriginalMessages:    []Message{},
+				AllOriginalMessagesMap: make(map[int]Message),
+				LastUpdated:            theTimeNow.Format("2006-01-02 15:04:05"),
+				DateCreated:            theTimeNow.Format("2006-01-02 15:04:05"),
 			}
 			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
 			//Insert the messageboard
@@ -877,12 +881,16 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 		// Close the cursor once finished
 		messageBoardHam.Close(theContext)
 		if theFind == 0 {
-			themessage := "No messageboard for hotdogs, creating one"
+			themessage := "No messageboard for hamburgers, creating one"
 			theReturnMessage.GivenHamMB = MessageBoard{
-				MessageBoardID: randomIDCreationAPISimple(),
-				BoardName:      "hamburger",
-				LastUpdated:    theTimeNow.Format("2006-01-02 15:04:05"),
-				DateCreated:    theTimeNow.Format("2006-01-02 15:04:05"),
+				MessageBoardID:         randomIDCreationAPISimple(),
+				BoardName:              "hamburger",
+				AllMessages:            []Message{},
+				AllMessagesMap:         make(map[int]Message),
+				AllOriginalMessages:    []Message{},
+				AllOriginalMessagesMap: make(map[int]Message),
+				LastUpdated:            theTimeNow.Format("2006-01-02 15:04:05"),
+				DateCreated:            theTimeNow.Format("2006-01-02 15:04:05"),
 			}
 			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
 			//Insert the messageboard
