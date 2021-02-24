@@ -829,6 +829,7 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
 			//Insert the messageboard
 			insertMongoMessageBoardSimple(theReturnMessage.GivenHDogMB)
+			fmt.Printf("DEBUG: %v\n", themessage)
 		} else {
 			//Nothing needed
 		}
@@ -893,6 +894,7 @@ func isMessageBoardCreated(w http.ResponseWriter, r *http.Request) {
 				DateCreated:            theTimeNow.Format("2006-01-02 15:04:05"),
 			}
 			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, themessage)
+			fmt.Printf("DEBUG: %v\n", themessage)
 			//Insert the messageboard
 			insertMongoMessageBoardSimple(theReturnMessage.GivenHamMB)
 		} else {
