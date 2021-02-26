@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
@@ -75,38 +76,20 @@ func main() {
 	mongoClient = connectDB()
 
 	/* Test JSON Creation */
-	/*
-		type UpdatedMongoBoard struct {
-			UpdatedMessageBoard MessageBoard `json:"UpdatedMessageBoard"`
-		}
-		theUpdatedMongoBoard := UpdatedMongoBoard{}
-		theMBTest := MessageBoard{}
-		theMessageTest := Message{
-			MessageID:       334545,
-			UserID:          445653,
-			PosterName:      "JimUsername",
-			Messages:        []Message{},
-			IsChild:         false,
-			HasChildren:     false,
-			ParentMessageID: 0,
-			UberParentID:    0,
-			Order:           0,
-			RepliesAmount:   0,
-			TheMessage:      "Test message one",
-			DateCreated:     "Uhhh",
-			LastUpdated:     "eaadf",
-		}
+	type UberUpdateMessages struct {
+		TheNewestMessage Message         `json:"TheNewestMessage"`
+		TheParentMessage Message         `json:"TheParentMessage"`
+		WhatBoard        string          `json:"WhatBoard"`
+		HotdogMB         MessageBoard    `json:"HotdogMB"`
+		HamburgerMB      MessageBoard    `json:"HamburgerMB"`
+		LoadedMapHDog    map[int]Message `json:"LoadedMapHDog"`
+		LoadedMapHam     map[int]Message `json:"LoadedMapHam"`
+	}
+	testUberUpdateMessages := UberUpdateMessages{}
 
-		theMBTest.AllMessages = append(theMBTest.AllMessages, theMessageTest)
-		theMBTest.BoardName = "hotdog"
-		theMBTest.MessageBoardID = 652774270816
+	yee, _ := json.Marshal(testUberUpdateMessages)
 
-		theUpdatedMongoBoard.UpdatedMessageBoard = theMBTest
-
-		yee, _ := json.Marshal(theUpdatedMongoBoard)
-
-		fmt.Printf("DEBUG: \n\n Here is yee: %v\n\n", string(yee))
-	*/
+	fmt.Printf("DEBUG: \n\n Here is yee: %v\n\n", string(yee))
 
 	//Handle Requests
 	handleRequests()

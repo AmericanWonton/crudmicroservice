@@ -341,8 +341,6 @@ func updateMongoMessageBoard(w http.ResponseWriter, r *http.Request) {
 	var theboardUpdate UpdatedMongoBoard
 	json.Unmarshal(bs, &theboardUpdate)
 
-	fmt.Printf("DEBUG: Here is the board we got: %v\n", theboardUpdate)
-
 	message_collection := mongoClient.Database("microservice").Collection("messageboard") //Here's our collection
 	theFilter := bson.M{
 		"messageboardid": bson.M{
@@ -415,7 +413,6 @@ func updateMongoMessageBoard(w http.ResponseWriter, r *http.Request) {
 /* This func creates a Messageboard, if it isn't already created
 it can be called within this Microservice */
 func insertMongoMessageBoardSimple(theMessageBoard MessageBoard) {
-	fmt.Println("DEBUG: we are in insertMongoMessageBOardSimple")
 	//Send this to the 'message' collection for safekeeping
 	messageCollection := mongoClient.Database("microservice").Collection("messageboard") //Here's our collection
 	collectedStuff := []interface{}{theMessageBoard}
