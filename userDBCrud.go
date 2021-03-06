@@ -303,6 +303,135 @@ func updateUser(w http.ResponseWriter, req *http.Request) {
 	}
 }
 
+//This gets a User with a certain UserID
+func getUser(w http.ResponseWriter, req *http.Request) {
+	//Unwrap from JSON
+	bs, err := ioutil.ReadAll(req.Body)
+	if err != nil {
+		theErr := "Error reading the request from updateUser: " + err.Error() + "\n" + string(bs)
+		logWriter(theErr)
+		fmt.Println(theErr)
+	}
+
+	//Declare data to return
+	type ReturnMessage struct {
+		TheErr       []string `json:"TheErr"`
+		ResultMsg    []string `json:"ResultMsg"`
+		SuccOrFail   int      `json:"SuccOrFail"`
+		ReturnedUser AUser    `json:"ReturnedUserMap"`
+	}
+	theReturnMessage := ReturnMessage{}
+	theReturnMessage.SuccOrFail = 0 //Initially set to success
+
+	//Decalre JSON we recieve
+	type UserIDUser struct {
+		TheUserID int `json:"TheUserID"`
+	}
+
+	//Marshal it into our type
+	var theUserGet UserIDUser
+	json.Unmarshal(bs, &theUserGet)
+
+	/* Find the User with the given Username */
+	theUserReturned := AUser{} //Initialize User to be returned after Mongo query
+
+	userCollection := mongoClient.Database("microservice").Collection("users") //Here's our collection
+	theFilter := bson.M{
+		"userid": bson.M{
+			"$eq": theUserGet.TheUserID, // check if bool field has value of 'false'
+		},
+	}
+	findOptions := options.Find()
+	findUser, err := userCollection.Find(theContext, theFilter, findOptions)
+	theFind := 0 //A counter to track how many users we find
+	if findUser.Err() != nil {
+		if strings.Contains(err.Error(), "no documents in result") {
+			stringUserID := strconv.Itoa(theUserGet.TheUserID)
+			returnedErr := "For " + stringUserID + ", no User was returned: " + err.Error()
+			fmt.Println(returnedErr)
+			logWriter(returnedErr)
+			theReturnMessage.SuccOrFail = 1
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, returnedErr)
+			theReturnMessage.TheErr = append(theReturnMessage.TheErr, returnedErr)
+			theReturnMessage.ReturnedUser = AUser{}
+		} else {
+			stringUserID := strconv.Itoa(theUserGet.TheUserID)
+			returnedErr := "For " + stringUserID + ", there was a Mongo Error: " + err.Error()
+			fmt.Println(returnedErr)
+			logWriter(returnedErr)
+			theReturnMessage.SuccOrFail = 1
+			theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, returnedErr)
+			theReturnMessage.TheErr = append(theReturnMessage.TheErr, returnedErr)
+			theReturnMessage.ReturnedUser = AUser{}
+		}
+	} else {
+		//Set initial values so the decode function dosen't freak out
+		theUserReturned.UserName = ""
+		theUserReturned.Password = ""
+		//Found User, decode to return
+		for findUser.Next(theContext) {
+			stringUserID := strconv.Itoa(theUserGet.TheUserID)
+			err := findUser.Decode(&theUserReturned)
+			if err != nil {
+				returnedErr := "For " + stringUserID +
+					", there was an error decoding document from Mongo: " + err.Error()
+				fmt.Println(returnedErr)
+				logWriter(returnedErr)
+				theReturnMessage.SuccOrFail = 2
+				theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, returnedErr)
+				theReturnMessage.TheErr = append(theReturnMessage.TheErr, returnedErr)
+				theReturnMessage.ReturnedUser = AUser{}
+			} else if len(theUserReturned.UserName) <= 1 {
+				returnedErr := "For " + stringUserID +
+					", there was an no document from Mongo: " + err.Error()
+				fmt.Println(returnedErr)
+				logWriter(returnedErr)
+				theReturnMessage.SuccOrFail = 2
+				theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, returnedErr)
+				theReturnMessage.TheErr = append(theReturnMessage.TheErr, returnedErr)
+				theReturnMessage.ReturnedUser = AUser{}
+			} else {
+				//Successful decode, do nothing
+			}
+			theFind = theFind + 1
+		}
+		findUser.Close(theContext)
+	}
+
+	if theFind <= 0 {
+		//Error, return an error back and log it
+		stringUserID := strconv.Itoa(theUserGet.TheUserID)
+		returnedErr := "For " + stringUserID +
+			", No User was returned."
+		fmt.Println(returnedErr)
+		logWriter(returnedErr)
+		theReturnMessage.SuccOrFail = 1
+		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, returnedErr)
+		theReturnMessage.TheErr = append(theReturnMessage.TheErr, returnedErr)
+		theReturnMessage.ReturnedUser = AUser{}
+	} else {
+		//Success, log the success and return User
+		stringUserID := strconv.Itoa(theUserGet.TheUserID)
+		returnedErr := "For " + stringUserID +
+			", User should be successfully decoded."
+		//fmt.Println(returnedErr)
+		logWriter(returnedErr)
+		theReturnMessage.SuccOrFail = 0
+		theReturnMessage.ResultMsg = append(theReturnMessage.ResultMsg, returnedErr)
+		theReturnMessage.TheErr = append(theReturnMessage.TheErr, "")
+		theReturnMessage.ReturnedUser = theUserReturned
+	}
+
+	//Format the JSON map for returning our results
+	theJSONMessage, err := json.Marshal(theReturnMessage)
+	//Send the response back
+	if err != nil {
+		errIs := "Error formatting JSON for return in getUser: " + err.Error()
+		logWriter(errIs)
+	}
+	fmt.Fprint(w, string(theJSONMessage))
+}
+
 /* This function returns a map of ALL Usernames entered in our database
 when called, (should be on the index page ) */
 func giveAllUsernames(w http.ResponseWriter, req *http.Request) {

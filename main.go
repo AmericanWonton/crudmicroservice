@@ -54,6 +54,7 @@ func handleRequests() {
 	myRouter.HandleFunc("/testPing", testPing).Methods("POST")                               //Test a post to this server
 	myRouter.HandleFunc("/addUser", addUser).Methods("POST")                                 //add a User
 	myRouter.HandleFunc("/deleteUser", deleteUser).Methods("POST")                           //Delete a User
+	myRouter.HandleFunc("/getUser", getUser).Methods("POST")                                 //Get a User
 	myRouter.HandleFunc("/updateUser", updateUser).Methods("POST")                           //update a User
 	myRouter.HandleFunc("/insertOneNewMessage", insertOneNewMessage).Methods("POST")         //insert a Message
 	myRouter.HandleFunc("/deleteOneMessage", deleteOneMessage).Methods("POST")               //Delete a Message
@@ -76,18 +77,14 @@ func main() {
 	mongoClient = connectDB()
 
 	/* Test JSON Creation */
-	type UberUpdateMessages struct {
-		TheNewestMessage Message         `json:"TheNewestMessage"`
-		TheParentMessage Message         `json:"TheParentMessage"`
-		WhatBoard        string          `json:"WhatBoard"`
-		HotdogMB         MessageBoard    `json:"HotdogMB"`
-		HamburgerMB      MessageBoard    `json:"HamburgerMB"`
-		LoadedMapHDog    map[int]Message `json:"LoadedMapHDog"`
-		LoadedMapHam     map[int]Message `json:"LoadedMapHam"`
+	//Decalre JSON we recieve
+	type UserIDUser struct {
+		TheUserID int `json:"TheUserID"`
 	}
-	testUberUpdateMessages := UberUpdateMessages{}
+	testUserID := UserIDUser{}
+	testUserID.TheUserID = 11111
 
-	yee, _ := json.Marshal(testUberUpdateMessages)
+	yee, _ := json.Marshal(testUserID)
 
 	fmt.Printf("DEBUG: \n\n Here is yee: %v\n\n", string(yee))
 
